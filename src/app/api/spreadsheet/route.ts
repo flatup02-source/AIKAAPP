@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: Record<string, any>) {
     console.error("Error updating sheet:", error);
     return NextResponse.json(
       { error: `シートへの書き込みに失敗しました: ${error.message}` },

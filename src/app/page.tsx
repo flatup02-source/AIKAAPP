@@ -1,7 +1,7 @@
 // app/page.tsx
 // (このファイルには "use client"; は不要です。Server Componentのままにします)
 
-import ClientContentWrapper from '@/components/home/ClientContentWrapper'; // 新しいラッパーをインポート
+import ClientContentWrapper from '@/components/common/ClientContentWrapper'; // パスを修正
 // import dynamic from 'next/dynamic'; // これはもう不要なので削除します
 
 export default function HomePage() {

@@ -1,0 +1,21 @@
+/* src/app/globals.css */
+ @tailwind base;
+ @tailwind components;
+ @tailwind utilities;
+
+ @layer base {
+  :root {
+    --color-white: #FFFFFF;
+    --color-light-gray: #F5F5F7;
+    --color-primary-blue: #007AFF;
+    --color-sporty-green: #34C759;
+    --color-accent-orange: #FF9500;
+  }
+}
+
+body {
+  /* Noto Sans JPが適用されるように調整 */
+  font-family: var(--font-noto-sans-jp), sans-serif;
+  /* 背景色をライトグレーに設定 */
+  background-color: var(--color-light-gray);
+}

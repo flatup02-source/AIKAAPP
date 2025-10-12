@@ -8,7 +8,7 @@ const imagekit = new ImageKit({
   urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
 });
 
-export async function GET(_request: Request) {
+export async function GET() {
   try {
     // ★★★ここが修正ポイント★★★
     // 現在時刻から60秒後を有効期限として設定します

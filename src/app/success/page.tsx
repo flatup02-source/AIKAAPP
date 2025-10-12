@@ -1,24 +1,26 @@
 "use client";
 
 import liff from "@line/liff";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 export default function SuccessPage() {
-  const [liffError, setLiffError] = useState("");
 
   useEffect(() => {
-    // LIFFの初期化はメインページで行われていると仮定
-    if (liff.id && !liff.isInClient()) {
-      console.log("This is not in the LINE client.");
-    }
+    const initLiff = async () => {
+      try {
+        await liff.init({ liffId: "2008276179-41Dz3bbJ" });
+      } catch (e) {
+        console.error("LIFF init failed.", e);
+      }
+    };
+    initLiff();
   }, []);
 
   const handleClose = () => {
     if (liff.isInClient()) {
       liff.closeWindow();
     } else {
-      // LIFF環境外の場合のフォールバック（例：トップページに戻る）
-      window.location.href = '/';
+      alert("LIFFアプリ内でのみウィンドウを閉じることができます。");
     }
   };
 
@@ -40,7 +42,7 @@ export default function SuccessPage() {
             onClick={handleClose}
             className="w-full max-w-xs mx-auto flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white bg-gradient-to-r from-blue-500 to-teal-400 hover:from-blue-600 hover:to-teal-500 transform hover:scale-105 transition-transform duration-200"
           >
-            LINEに戻る
+            ウィンドウを閉じる
           </button>
         </div>
       </div>

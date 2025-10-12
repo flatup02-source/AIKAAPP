@@ -1,48 +1,43 @@
 "use client";
 
-import { useState, ChangeEvent, useEffect } from "react"; // useEffect をインポート
+import { useState, ChangeEvent, useEffect } from "react";
 import Image from "next/image";
 import axios from 'axios';
-import { useRouter } from "next/navigation"; // この行を追加！
-import liff from "@line/liff"; // LIFF SDKをインポート
+import { useRouter } from "next/navigation";
+import liff from "@line/liff";
 
 export default function AikaFormPage() {
-  const router = useRouter(); // この行を追加！
+  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [userName, setUserName] = useState("");
   const [theme, setTheme] = useState("");
   const [requests, setRequests] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [liffMessage, setLiffMessage] = useState("LIFFを初期化中..."); // LIFFの状態メッセージ
+  const [liffMessage, setLiffMessage] = useState("LIFFを初期化中...");
 
-  // ★★★ここからがLIFFとの融合部分だ！★★★
   useEffect(() => {
     const initializeLiff = async () => {
       try {
-        await liff.init({ liffId: "2008276179-41Dz3bbJ" }); // おめえのLIFF IDをここにセット！
-        setLiffMessage("LIFFの初期化に成功しました！");
+        await liff.init({ liffId: "2008276179-41Dz3bbJ" }); // あなたのLIFF ID
+        setLiffMessage("LIFFの初期化に成功！");
 
         if (!liff.isLoggedIn()) {
-          setLiffMessage("LINEにログインしていません。ログインしてください。");
-          // 必要であれば liff.login() を呼び出す
+          setLiffMessage("LINEにログインしていません。");
           return;
         }
 
         const profile = await liff.getProfile();
-        setUserName(profile.displayName); // LINEの名前を自動でセット！
+        setUserName(profile.displayName);
         setLiffMessage(`ようこそ、${profile.displayName}さん！`);
 
       } catch (e) {
-        console.error(e);
-        setLiffMessage("LIFFの初期化に失敗しました。");
-        setError((e as Error).toString());
+        console.error("LIFF Init Error:", e);
+        setLiffMessage("LIFFの初期化に失敗。通常のブラウザで開いていますか？");
       }
     };
     initializeLiff();
   }, []);
-  // ★★★ここまで★★★
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -51,17 +46,17 @@ export default function AikaFormPage() {
   };
 
   const handleUpload = async () => {
-    // (アップロード処理は変更なし)
     if (!file) {
       alert("まず動画ファイルを選択してください。");
       return;
     }
     setUploading(true);
     setUploadProgress(0);
-    setError(null);
+
     try {
       const signatureResponse = await axios.get('/api/imagekit-sign');
       const { signature, expire, token } = signatureResponse.data;
+
       const formData = new FormData();
       formData.append("file", file);
       formData.append("publicKey", process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!);
@@ -69,13 +64,17 @@ export default function AikaFormPage() {
       formData.append("expire", expire);
       formData.append("token", token);
       formData.append("fileName", file.name);
+
       const imagekitResponse = await axios.post('https://upload.imagekit.io/api/v1/files/upload', formData, {
         onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total ?? file.size));
-          setUploadProgress(percentCompleted);
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percentCompleted);
+          }
         },
       });
       const videoUrl = imagekitResponse.data.url;
+
       await axios.post('/api/spreadsheet', {
         userName,
         theme,
@@ -85,11 +84,17 @@ export default function AikaFormPage() {
         fileType: file.type,
         fileSize: file.size,
       });
-      router.push('/success');   // ← この行に書き換える！
-    } catch (err: any) {
+      
+      router.push('/success');
+
+    } catch (err) {
       console.error(err);
-      const errorMessage = err.response?.data?.message || err.response?.data?.error || "アップロードに失敗しました。";
-      setError(errorMessage);
+      let errorMessage = "アップロードに失敗しました。";
+      if (axios.isAxiosError(err)) {
+        errorMessage = err.response?.data?.message || err.response?.data?.error || "サーバーでエラーが発生しました。";
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
       alert(`エラーが発生しました: ${errorMessage}`);
     } finally {
       setUploading(false);
@@ -137,9 +142,7 @@ export default function AikaFormPage() {
         </div>
         
         <main className="bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-lg space-y-8 border border-white/50">
-           {/* LIFFのステータスメッセージ */}
-          <p className="text-center text-sm text-gray-500">{liffMessage}</p>
-
+           <p className="text-center text-sm text-gray-500">{liffMessage}</p>
           <div className="space-y-6">
             <div>
               <label htmlFor="userName" className="block text-sm font-bold text-gray-700 mb-2">
@@ -152,11 +155,10 @@ export default function AikaFormPage() {
                 onChange={(e) => setUserName(e.target.value)}
                 placeholder="LIFFから自動取得中..."
                 className="w-full bg-white/50 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200"
-                readOnly // 自動入力なので編集不可に
+                readOnly
               />
             </div>
 
-            {/* ... themes, requests, file-upload ... (変更なし) */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-3">
                 今日のテーマ (1つだけ選んでみてね)

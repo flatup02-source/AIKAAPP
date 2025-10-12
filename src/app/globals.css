@@ -2,11 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    @apply bg-gray-900 text-[#E0E0E0];
-  }
-}
+
 
 @layer components {
   .scanline {

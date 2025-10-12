@@ -1,21 +1,45 @@
-/* src/app/globals.css */
- @tailwind base;
- @tailwind components;
- @tailwind utilities;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
- @layer base {
-  :root {
-    --color-white: #FFFFFF;
-    --color-light-gray: #F5F5F7;
-    --color-primary-blue: #007AFF;
-    --color-sporty-green: #34C759;
-    --color-accent-orange: #FF9500;
+@layer base {
+  body {
+    @apply bg-brand-black text-[#E0E0E0];
   }
 }
 
-body {
-  /* Noto Sans JPが適用されるように調整 */
-  font-family: var(--font-noto-sans-jp), sans-serif;
-  /* 背景色をライトグレーに設定 */
-  background-color: var(--color-light-gray);
+@layer components {
+  .scanline {
+    animation: scanline 3s linear infinite;
+  }
+
+  .pulse-gold {
+    animation: pulse-gold 2s infinite;
+  }
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-10%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse-gold {
+  0%, 100% {
+    box-shadow: 0 0 15px 5px rgba(255, 215, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 25px 10px rgba(255, 215, 0, 0.7);
+  }
 }

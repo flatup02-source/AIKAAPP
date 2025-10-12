@@ -1,16 +1,48 @@
 "use client";
 
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useEffect } from "react"; // useEffect をインポート
 import Image from "next/image";
 import axios from 'axios';
+import { useRouter } from "next/navigation"; // この行を追加！
+import liff from "@line/liff"; // LIFF SDKをインポート
 
 export default function AikaFormPage() {
+  const router = useRouter(); // この行を追加！
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [userName, setUserName] = useState("");
   const [theme, setTheme] = useState("");
   const [requests, setRequests] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [liffMessage, setLiffMessage] = useState("LIFFを初期化中..."); // LIFFの状態メッセージ
+
+  // ★★★ここからがLIFFとの融合部分だ！★★★
+  useEffect(() => {
+    const initializeLiff = async () => {
+      try {
+        await liff.init({ liffId: "2008276179-41Dz3bbJ" }); // おめえのLIFF IDをここにセット！
+        setLiffMessage("LIFFの初期化に成功しました！");
+
+        if (!liff.isLoggedIn()) {
+          setLiffMessage("LINEにログインしていません。ログインしてください。");
+          // 必要であれば liff.login() を呼び出す
+          return;
+        }
+
+        const profile = await liff.getProfile();
+        setUserName(profile.displayName); // LINEの名前を自動でセット！
+        setLiffMessage(`ようこそ、${profile.displayName}さん！`);
+
+      } catch (e) {
+        console.error(e);
+        setLiffMessage("LIFFの初期化に失敗しました。");
+        setError((e as Error).toString());
+      }
+    };
+    initializeLiff();
+  }, []);
+  // ★★★ここまで★★★
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -19,20 +51,17 @@ export default function AikaFormPage() {
   };
 
   const handleUpload = async () => {
+    // (アップロード処理は変更なし)
     if (!file) {
       alert("まず動画ファイルを選択してください。");
       return;
     }
-
     setUploading(true);
     setUploadProgress(0);
-
+    setError(null);
     try {
-      // 1. バックエンドに署名をリクエスト
       const signatureResponse = await axios.get('/api/imagekit-sign');
       const { signature, expire, token } = signatureResponse.data;
-
-      // 2. ImageKitに動画をアップロード
       const formData = new FormData();
       formData.append("file", file);
       formData.append("publicKey", process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!);
@@ -40,20 +69,13 @@ export default function AikaFormPage() {
       formData.append("expire", expire);
       formData.append("token", token);
       formData.append("fileName", file.name);
-
-      const imagekitResponse = await axios.post(
-        'https://upload.imagekit.io/api/v1/files/upload',
-        formData,
-        {
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total ?? file.size));
-            setUploadProgress(percentCompleted);
-          },
-        }
-      );
+      const imagekitResponse = await axios.post('https://upload.imagekit.io/api/v1/files/upload', formData, {
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total ?? file.size));
+          setUploadProgress(percentCompleted);
+        },
+      });
       const videoUrl = imagekitResponse.data.url;
-
-      // 3. 全てのデータを自分のバックエンドに送信してスプレッドシートに記録
       await axios.post('/api/spreadsheet', {
         userName,
         theme,
@@ -63,19 +85,11 @@ export default function AikaFormPage() {
         fileType: file.type,
         fileSize: file.size,
       });
-
-      // 成功！
-      alert("送信完了しました！");
-      // TODO: ここで完了画面へ遷移させる (例: router.push('/success'))
-
-    } catch (err) {
+      router.push('/success');   // ← この行に書き換える！
+    } catch (err: any) {
       console.error(err);
-      let errorMessage = "アップロードに失敗しました。";
-      if (axios.isAxiosError(err)) {
-        errorMessage = err.response?.data?.message || err.response?.data?.error || "サーバーでエラーが発生しました。";
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
-      }
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || "アップロードに失敗しました。";
+      setError(errorMessage);
       alert(`エラーが発生しました: ${errorMessage}`);
     } finally {
       setUploading(false);
@@ -97,7 +111,6 @@ export default function AikaFormPage() {
       }}
     >
       <div className="w-full max-w-2xl space-y-12">
-        {/* ヘッダーセクション */}
         <header className="text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800 drop-shadow-sm leading-tight">
             たった10秒…お前の「戦闘力」、見せてみろ！
@@ -107,7 +120,6 @@ export default function AikaFormPage() {
           </p>
         </header>
 
-        {/* キャラクター画像セクション */}
         <div className="flex justify-center">
           <div 
             className="relative p-1 rounded-2xl" 
@@ -124,16 +136,10 @@ export default function AikaFormPage() {
           </div>
         </div>
         
-        {/* メインコンテンツ */}
         <main className="bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-lg space-y-8 border border-white/50">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">あなたの動画を送ろう</h2>
-            <p className="text-gray-600">
-             AIKA 18号が、あなたの素敵な長所と、もっと良くなるポイントをやさしく丁寧に分析します。
-            </p>
-          </div>
+           {/* LIFFのステータスメッセージ */}
+          <p className="text-center text-sm text-gray-500">{liffMessage}</p>
 
-          {/* 各入力フォーム */}
           <div className="space-y-6">
             <div>
               <label htmlFor="userName" className="block text-sm font-bold text-gray-700 mb-2">
@@ -144,11 +150,13 @@ export default function AikaFormPage() {
                 id="userName"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
-                placeholder="例：サイヤ人1号"
+                placeholder="LIFFから自動取得中..."
                 className="w-full bg-white/50 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200"
+                readOnly // 自動入力なので編集不可に
               />
             </div>
 
+            {/* ... themes, requests, file-upload ... (変更なし) */}
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-3">
                 今日のテーマ (1つだけ選んでみてね)

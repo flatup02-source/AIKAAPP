@@ -1,16 +1,22 @@
 import type { Metadata } from "next";
-import { Noto_Sans_JP } from "next/font/google";
+import { Orbitron, Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
+
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-orbitron",
+});
 
 const notoSansJp = Noto_Sans_JP({
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: ["400", "700"],
   variable: "--font-noto-sans-jp",
 });
 
 export const metadata: Metadata = {
-  title: "AIKA フォーム診断アプリ",
-  description: "あなたの「やってみたい」を応援する、身近なパーソナルAIコーチ",
+  title: "AIKA BATTLE SCOUTER",
+  description: "お前の力、AIKAに見せる覚悟はあるか？",
 };
 
 export default function RootLayout({
@@ -20,7 +26,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className={`${notoSansJp.variable} font-sans antialiased`}>
+      <body
+        className={`${orbitron.variable} ${notoSansJp.variable} font-sans antialiased`}
+      >
         {children}
       </body>
     </html>

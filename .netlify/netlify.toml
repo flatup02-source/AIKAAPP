@@ -12,8 +12,7 @@ package = "@netlify/plugin-nextjs"
 [plugins.inputs]
 
 [build]
-publish = "/Users/jin/Desktop/aika-form-app/.next"
-publishOrigin = "ui"
+
 commandOrigin = "ui"
 command = "npm run build"
 

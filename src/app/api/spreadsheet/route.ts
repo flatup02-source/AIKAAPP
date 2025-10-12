@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     // 環境変数から認証情報を取得するか、ファイルから読み込む
     const credentials = process.env.GOOGLE_CREDENTIALS
       ? JSON.parse(process.env.GOOGLE_CREDENTIALS)
-      : require("path").join(process.cwd(), "google-credentials.json");
+      : path.join(process.cwd(), "google-credentials.json");
 
     const auth = new google.auth.GoogleAuth({
       credentials,

@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body
-        className={`${orbitron.variable} ${notoSansJp.variable} font-sans antialiased`}
+        className={`${orbitron.variable} ${notoSansJp.variable} font-sans antialiased bg-gray-900`}
       >
         {children}
       </body>

@@ -72,7 +72,7 @@ export default function ClientContent() {
       // ここに後で完了画面への遷移処理を追加します
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: Record<string, any>) {
+    } catch (err: any) {
       console.error(err);
       const errorMessage = err.response?.data?.error || "アップロードに失敗しました。";
       setError(errorMessage);

@@ -12,6 +12,7 @@
     "node": "20.x"
   },
   "dependencies": {
+    "@line/liff": "^2.27.2",
     "axios": "^1.12.2",
     "googleapis": "^162.0.0",
     "imagekit": "^6.0.0",

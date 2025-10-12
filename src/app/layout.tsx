@@ -7,6 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "AIKA 18号 バトルスカウター",
   description: "あなたのフォームの戦闘力を測定します",
+  viewport: "width=device-width, initial-scale=1.0",
 };
 
 export default function RootLayout({

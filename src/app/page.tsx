@@ -54,7 +54,23 @@ export default function AikaFormPage() {
     setUploadProgress(0);
 
     try {
-      const signatureResponse = await axios.get('/api/imagekit-sign');
+      // LIFFからIDトークンを取得
+      const idToken = await liff.getIDToken();
+      if (!idToken) {
+        alert("認証トークンが取得できませんでした。再度ログインしてからお試しください。");
+        setUploading(false);
+        return;
+      }
+
+      // 認証ヘッダーを設定
+      const config = {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      };
+
+      // 署名取得APIを認証付きで呼び出し
+      const signatureResponse = await axios.get('/api/imagekit-sign', config);
       const { signature, expire, token } = signatureResponse.data;
 
       const formData = new FormData();
@@ -65,6 +81,7 @@ export default function AikaFormPage() {
       formData.append("token", token);
       formData.append("fileName", file.name);
 
+      // ImageKitへのアップロード（ここには認証ヘッダーは不要）
       const imagekitResponse = await axios.post('https://upload.imagekit.io/api/v1/files/upload', formData, {
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
@@ -75,6 +92,7 @@ export default function AikaFormPage() {
       });
       const videoUrl = imagekitResponse.data.url;
 
+      // スプレッドシート保存APIを認証付きで呼び出し
       await axios.post('/api/spreadsheet', {
         userName,
         theme,
@@ -83,7 +101,7 @@ export default function AikaFormPage() {
         fileName: file.name,
         fileType: file.type,
         fileSize: file.size,
-      });
+      }, config);
       
       router.push('/success');
 
@@ -131,7 +149,7 @@ export default function AikaFormPage() {
             style={{boxShadow: '0 0 40px rgba(76, 201, 240, 0.4)'}}
           >
             <Image
-              src="/aika-character.jpg"
+              src="https://ik.imagekit.io/FLATUPGYM/Gemini_Generated_Image_k1l2lbk1l2lbk1l2%20(1).png?updatedAt=1760039454085TOP"
               alt="AIコーチ AIKA 18号"
               width={500}
               height={500}
@@ -230,7 +248,7 @@ export default function AikaFormPage() {
               <button
                 onClick={handleUpload}
                 disabled={uploading || !file}
-                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg text-lg font-bold text-white bg-gradient-to-r from-blue-500 to-teal-400 hover:from-blue-600 hover:to-teal-500 disabled:bg-gray-400 disabled:from-gray-400 disabled:cursor-not-allowed transform hover:scale-105 transition-transform duration-200"
+                className="w-full flex justify-center py-5 px-10 border border-transparent rounded-full shadow-lg text-xl font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transform hover:scale-105 transition-all duration-300"
               >
                 {uploading ? `解析中... ${uploadProgress}%` : "AIKA 18号に動画を送る"}
               </button>

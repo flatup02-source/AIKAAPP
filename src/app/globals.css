@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-brand-black text-[#E0E0E0];
+    @apply bg-gray-900 text-[#E0E0E0];
   }
 }
 

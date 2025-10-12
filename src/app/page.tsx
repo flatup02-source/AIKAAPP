@@ -11,7 +11,6 @@ export default function AikaFormPage() {
   const [userName, setUserName] = useState("");
   const [theme, setTheme] = useState("");
   const [requests, setRequests] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -27,7 +26,6 @@ export default function AikaFormPage() {
 
     setUploading(true);
     setUploadProgress(0);
-    setError(null);
 
     try {
       // 1. バックエンドに署名をリクエスト
@@ -70,10 +68,14 @@ export default function AikaFormPage() {
       alert("送信完了しました！");
       // TODO: ここで完了画面へ遷移させる (例: router.push('/success'))
 
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      const errorMessage = err.response?.data?.message || err.response?.data?.error || "アップロードに失敗しました。";
-      setError(errorMessage);
+      let errorMessage = "アップロードに失敗しました。";
+      if (axios.isAxiosError(err)) {
+        errorMessage = err.response?.data?.message || err.response?.data?.error || "サーバーでエラーが発生しました。";
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
       alert(`エラーが発生しました: ${errorMessage}`);
     } finally {
       setUploading(false);

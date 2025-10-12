@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: Record<string, any>) {
+  } catch (error: any) {
     console.error("Error updating sheet:", error);
     return NextResponse.json(
       { error: `シートへの書き込みに失敗しました: ${error.message}` },

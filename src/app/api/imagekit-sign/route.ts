@@ -9,18 +9,15 @@ const imagekit = new ImageKit({
 });
 
 export async function GET() {
+  console.log("Attempting to get ImageKit authentication parameters...");
   try {
-    // ★★★ここが修正ポイント★★★
-    // 現在時刻から60秒後を有効期限として設定します
-    const expire = Math.floor(Date.now() / 1000) + 60;
-
-    const authenticationParameters = imagekit.getAuthenticationParameters(
-      undefined, // tokenは不要なのでundefined
-      expire     // 正しく計算した有効期限を設定
-    );
-
+    const authenticationParameters = imagekit.getAuthenticationParameters();
+    console.log("Successfully got ImageKit authentication parameters:", {
+      token: authenticationParameters.token,
+      expire: authenticationParameters.expire,
+      signature: "..." // Signature is too long to log
+    });
     return NextResponse.json(authenticationParameters);
-
   } catch (error) {
     console.error("ImageKit Auth Error:", error);
     return NextResponse.json(

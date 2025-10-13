@@ -6,6 +6,20 @@ body, html {
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --primary-color: #00BFA5;
+  --background-color: #F5F5F5;
+  --text-color: #212121;
+  --success-color: #4CAF50;
+  --error-color: #F44336;
+  --white: #FFFFFF;
+}
+
+body {
+  color: var(--text-color);
+  background: var(--background-color);
+}
+
 
 
 @layer components {

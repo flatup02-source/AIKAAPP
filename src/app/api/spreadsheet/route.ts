@@ -3,11 +3,11 @@ import { google } from "googleapis";
 import path from "path";
 
 export async function POST(req: NextRequest) {
-  // このデバッグコードはもう不要なので消してもOKだ
-  console.log("!!! SERVER PROCESS NODE VERSION:", process.version);
-
+  console.log("Received request to update spreadsheet.");
   try {
     const body = await req.json();
+    console.log("Request body:", body);
+
     const {
       userName,
       theme,
@@ -19,15 +19,18 @@ export async function POST(req: NextRequest) {
     } = body;
 
     if (!videoUrl || !fileName) {
+      console.error("Missing required parameters: videoUrl or fileName");
       return NextResponse.json(
         { error: "Missing required parameters" },
         { status: 400 }
       );
     }
 
-    // 環境変数から認証情報を取得するか、ファイルから読み込む
-    const credentials = process.env.GOOGLE_CREDENTIALS
-      ? JSON.parse(process.env.GOOGLE_CREDENTIALS)
+    const credentialsEnv = process.env.GOOGLE_CREDENTIALS;
+    console.log("Using GOOGLE_CREDENTIALS from env:", !!credentialsEnv);
+
+    const credentials = credentialsEnv
+      ? JSON.parse(credentialsEnv)
       : path.join(process.cwd(), "google-credentials.json");
 
     const auth = new google.auth.GoogleAuth({
@@ -50,18 +53,19 @@ export async function POST(req: NextRequest) {
         fileSize
     ]];
 
+    console.log("Appending values to spreadsheet:", values);
+
     await sheets.spreadsheets.values.append({
       spreadsheetId: process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID,
-      // ★★★ ここが最後の修正ポイントだ！ ★★★
-      range: "Form Responses 1", // シート名を正しく修正！!A1も不要！
+      range: "Form Responses 1",
       valueInputOption: "USER_ENTERED",
       requestBody: {
         values: values,
       },
     });
 
+    console.log("Successfully appended values to spreadsheet.");
     return NextResponse.json({ success: true });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("Error updating sheet:", error);
     return NextResponse.json(

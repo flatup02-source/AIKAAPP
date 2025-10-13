@@ -75,8 +75,11 @@ export default function AikaFormPage() {
 
       const config = { headers: { Authorization: `Bearer ${idToken}` } };
 
+      // 署名取得
+      console.log("Fetching ImageKit signature...");
       const signatureResponse = await axios.get('/api/imagekit-sign', config);
       const { signature, expire, token } = signatureResponse.data;
+      console.log("ImageKit signature fetched successfully.");
 
       const formData = new FormData();
       formData.append("file", file);
@@ -86,6 +89,8 @@ export default function AikaFormPage() {
       formData.append("token", token);
       formData.append("fileName", file.name);
 
+      // ImageKitへのアップロード
+      console.log("Uploading to ImageKit...");
       const imagekitResponse = await axios.post('https://upload.imagekit.io/api/v1/files/upload', formData, {
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
@@ -95,23 +100,30 @@ export default function AikaFormPage() {
         },
       });
       const videoUrl = imagekitResponse.data.url;
+      console.log("Upload to ImageKit successful:", videoUrl);
 
+      // スプレッドシートへの書き込み
+      console.log("Writing to spreadsheet...");
       await axios.post('/api/spreadsheet', {
         userName, genre, theme, requests, videoUrl,
         fileName: file.name, fileType: file.type, fileSize: file.size,
       }, config);
+      console.log("Spreadsheet write successful.");
       
       setUploadStatus("success");
       setCurrentStep(5); // Go to final step
 
     } catch (err: unknown) {
-      console.error(err);
+      console.error("An error occurred during the upload process:", err);
+
       let msg = "アップロードに失敗しました。";
       if (axios.isAxiosError(err)) {
+        console.error("Axios error details:", err.response?.data);
         if (err.response?.status === 401) {
             msg = "認証エラーが発生しました。再度ログインしてからお試しください。";
         } else {
-            msg = err.response?.data?.message || err.response?.data?.error || "サーバーでエラーが発生しました。";
+            const errorDetail = err.response?.data?.message || "サーバーでエラーが発生しました。";
+            msg = `アップロードに失敗しました: ${errorDetail}`;
         }
       } else if (err instanceof Error) {
         msg = err.message;

@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
 
     const {
       userName,
+      genre, // Extract genre
       theme,
       requests,
       videoUrl,
@@ -45,6 +46,7 @@ export async function POST(req: NextRequest) {
     const values = [[
         now, 
         userName || "",
+        genre || "", // Add genre to values
         theme || "",
         requests || "",
         videoUrl, 

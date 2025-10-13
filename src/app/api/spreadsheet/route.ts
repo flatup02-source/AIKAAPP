@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const credentials = JSON.parse(env.GOOGLE_CREDENTIALS);
+    const credentials = JSON.parse(env.GOOGLE_CREDENTIALS_JSON);
 
     const auth = new google.auth.GoogleAuth({
       credentials,

@@ -23,8 +23,10 @@ export default function AikaFormPage() {
   useEffect(() => {
     const initializeLiff = async () => {
       try {
-        await liff.init({ liffId: "2008276179-41Dz3bbJ" });
-        if (liff.isLoggedIn()) {
+        await liff.init({ liffId: "2008276179-41Dz3bbj" });
+        if (!liff.isLoggedIn()) {
+          liff.login();
+        } else {
           const profile = await liff.getProfile();
           setUserName(profile.displayName);
         }

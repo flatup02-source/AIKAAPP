@@ -5,6 +5,8 @@ import axios from 'axios';
 import liff from "@line/liff";
 import Image from 'next/image';
 
+import { env } from "@/env.mjs";
+
 // ☆☆☆ 30-40代女性向けにUI/UXの文言を全面リファクタリング ☆☆☆
 
 export default function AikaFormPage() {
@@ -85,7 +87,7 @@ export default function AikaFormPage() {
 
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("publicKey", process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!);
+      formData.append("publicKey", env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY);
       formData.append("signature", signature);
       formData.append("expire", expire);
       formData.append("token", token);

@@ -5,13 +5,13 @@ import axios from 'axios';
 import liff from "@line/liff";
 import Image from 'next/image';
 
-// ☆☆☆ 感情戦略設計書に基づき、UI/UXを全面的にリファクタリング ☆☆☆
+// ☆☆☆ 30-40代女性向けにUI/UXの文言を全面リファクタリング ☆☆☆
 
 export default function AikaFormPage() {
   // --- State Management ---
   const [currentStep, setCurrentStep] = useState(1);
   const [userName, setUserName] = useState("");
-  const [genre, setGenre] = useState(""); // New: 武道ジャンル
+  const [genre, setGenre] = useState("");
   const [theme, setTheme] = useState("");
   const [requests, setRequests] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -30,7 +30,7 @@ export default function AikaFormPage() {
         }
       } catch (e: unknown) {
         console.error("LIFF Init Error:", e);
-        setUserName("挑戦者");
+        setUserName("ゲスト");
       }
     };
     initializeLiff();
@@ -119,13 +119,13 @@ export default function AikaFormPage() {
 
   const renderStep1 = () => (
     <div className="text-center">
-        <Image src="/logo-aisoryu.png" alt="AI素流 ロゴ" width={150} height={150} className="mx-auto mb-4"/>
+        <Image src="/logo-aisoryu.png" alt="AI素流 ロゴ" width={120} height={120} className="mx-auto mb-6"/>
         <h1 className="text-2xl font-bold text-gray-800 leading-tight mb-2">
-            魂のフォームを刻み込め。
+            あなたの動きを、もっと美しく。
         </h1>
-        <p className="text-gray-600 mb-8">AIが導く、現代武道家のための次世代修行道。</p>
+        <p className="text-gray-600 mb-8">AIがひろえる、新しいトレーニング習慣</p>
         <button onClick={() => setCurrentStep(2)} className="btn-primary">
-            覚醒への一歩を踏み出す
+            トレーニングを始める
         </button>
     </div>
   );
@@ -138,7 +138,7 @@ export default function AikaFormPage() {
 
   const renderStep2 = () => (
     <div className="text-center">
-      <h2 className="text-xl font-bold mb-6">師範が問う。汝、どの道を極めるか？</h2>
+      <h2 className="text-xl font-bold mb-6">どのトレーニングに挑戦しますか？</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {genres.map((item) => (
           <div
@@ -155,20 +155,20 @@ export default function AikaFormPage() {
   );
 
   const themes = [
-    { title: "キレイなフォームになりたい！", icon: "✨" },
-    { title: "パンチのスピードを上げたい！", icon: "💨" },
-    { title: "カッコいいコンビネーションを覚えたい！", icon: "🥊" },
-    { title: "とにかく楽しみたい！", icon: "😄" },
+    { title: "美しいフォームを身につけたい", icon: "✨" },
+    { title: "パンチのスピードを上げたい", icon: "✨" },
+    { title: "かっこいい連続技を覚えたい", icon: "✨" },
+    { title: "まずは楽しみながらやってみたい", icon: "✨" },
   ];
 
   const renderStep3 = () => (
     <div className="text-center">
-      <h2 className="text-xl font-bold mb-6">良かろう。では、何を目指す？</h2>
+      <h2 className="text-xl font-bold mb-6">あなたの目標を教えてください</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {themes.map((item) => (
           <div
             key={item.title}
-            onClick={() => { setTheme(item.title); setCurrentStep(4); }}
+            onClick={() => { setTheme(item.title); }}
             className={`card-sm ${theme === item.title ? "selected" : ""}`}
           >
             <span className="text-2xl mr-3">{item.icon}</span>
@@ -181,30 +181,31 @@ export default function AikaFormPage() {
           rows={3}
           value={requests}
           onChange={(e) => setRequests(e.target.value)}
-          placeholder="その他、特に見てほしいポイントなど (任意)"
+          placeholder="その他、気になるポイントがあればご記入ください"
           className="w-full bg-gray-100 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200 mt-6"
         />
-        <button onClick={() => setCurrentStep(4)} className="btn-secondary mt-4">次へ</button>
+        <button onClick={() => setCurrentStep(4)} className="btn-primary mt-6">
+            次へ進む
+        </button>
     </div>
   );
 
   const renderStep4 = () => (
     <div className="text-center">
-      <h2 className="text-xl font-bold mb-4">その覚悟、しかと見届けよう。</h2>
-      <p className="text-gray-600 mb-6">お前の魂を、この一撃に込めよ。</p>
+      <h2 className="text-xl font-bold mb-4">動画を準備してくださいね</h2>
       
-      <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm mb-6">
-        <h3 className="font-bold mb-2">【重要】動画の掟</h3>
-        <ul className="list-disc list-inside text-left">
-          <li>動画は<span className="font-bold">10秒以内、10MB以下</span>とせよ。</li>
-          <li><span className="font-bold">正面または側面</span>から全身を写すこと。</li>
-          <li>背景はゴチャゴチャさせぬこと。</li>
+      <div className="bg-gray-50 border border-gray-200 text-gray-700 rounded-lg p-4 text-sm mb-6">
+        <h3 className="font-bold mb-2 text-left">動画のポイント</h3>
+        <ul className="list-disc list-inside text-left space-y-1">
+          <li>10秒以内の動画でお願いします</li>
+          <li>正面か横から全身が映るように</li>
+          <li>背景はシンプルがベストです</li>
         </ul>
       </div>
 
       {uploadStatus === "uploading" ? (
         <div>
-          <p className="mb-4 font-semibold">師範が貴方の動画を鋭意解析中…</p>
+          <p className="mb-4 font-semibold">AIが解析中です...</p>
           <div className="w-full bg-gray-200 rounded-full h-2.5">
             <div className="bg-primary h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
           </div>
@@ -213,12 +214,12 @@ export default function AikaFormPage() {
       ) : (
         <>
           <label htmlFor="videoFile" className="file-label">
-            {file ? `選択中: ${file.name}` : "ここをタップして動画を選択"}
+            {file ? `選択中: ${file.name}` : "ここをタップして動画を選ぶ"}
           </label>
           <input type="file" id="videoFile" accept="video/*" onChange={handleFileChange} className="hidden" />
           {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
           <button onClick={handleUpload} className="btn-primary mt-4" disabled={!file}>
-            師範に動画を送る
+            送信する
           </button>
         </>
       )}
@@ -230,19 +231,19 @@ export default function AikaFormPage() {
       {uploadStatus === "success" ? (
         <>
           <div className="text-6xl mb-4">🎉</div>
-          <h2 className="text-2xl font-bold mb-4">見事だ！動画は確かに受け取った。</h2>
+          <h2 className="text-2xl font-bold mb-4">ありがとうございます！</h2>
           <div className="bg-gray-100 p-4 rounded-lg text-left mb-8">
-              <h3 className="font-bold text-center mb-2">【解析時間に関するご案内】</h3>
-              <p className="text-sm text-gray-700">送信された動画の解析には、<span className="font-bold">半日から1日ほど</span>お時間を頂戴いたします。解析が完了次第、LINEのメッセージにて内容を丁寧にお知らせいたしますので、今しばらくお待ちください。</p>
+              <h3 className="font-bold text-center mb-2">解析時間のご案内</h3>
+              <p className="text-sm text-gray-700">動画の解析には、<span className="font-bold">半日から1日ほど</span>お時間をいただく場合がございます。解析が完了しましたら、LINEのメッセージでお知らせしますので、しばらくお待ちくださいませ。</p>
           </div>
           <button onClick={restart} className="btn-secondary">
-            別の動画で修行を続ける
+            別のトレーニングを試す
           </button>
         </>
       ) : (
         <>
           <div className="text-6xl mb-4">❌</div>
-          <h2 className="text-2xl font-bold mb-4">エラーが発生した。</h2>
+          <h2 className="text-2xl font-bold mb-4">エラーが発生しました</h2>
           <p className="text-red-600 bg-red-100 p-3 rounded-lg mb-8">{errorMessage}</p>
           <button onClick={() => setCurrentStep(4)} className="btn-primary">
             もう一度試す
@@ -254,7 +255,7 @@ export default function AikaFormPage() {
 
   // --- Main Render ---
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
       <div className="container">
         {currentStep === 1 && renderStep1()}
         {currentStep === 2 && renderStep2()}
@@ -266,10 +267,10 @@ export default function AikaFormPage() {
       <style jsx global>{`
         .container {
           width: 90%;
-          max-width: 500px;
+          max-width: 420px; /* Slightly wider for better text flow */
           background: var(--white);
           border-radius: 16px;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
           padding: 2rem;
           text-align: center;
           transition: all 0.3s ease-in-out;
@@ -295,7 +296,7 @@ export default function AikaFormPage() {
         .btn-primary:not(:disabled):hover {
           background-color: #00897B;
           transform: translateY(-2px);
-          box-shadow: 0 4px 15px rgba(0, 191, 165, 0.4);
+          box-shadow: 0 4px 15px rgba(0, 191, 165, 0.3);
         }
         .btn-secondary {
           background-color: #E0E0E0;

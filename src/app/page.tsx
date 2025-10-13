@@ -153,7 +153,7 @@ export default function AikaFormPage() {
 
   const renderStep1 = () => (
     <div className="text-center">
-        <Image src="https://ik.imagekit.io/FLATUPGYM/Generated%20Image%20October%2013,%202025%20-%201_22PM%20(2).png?updatedAt=1760329626628" alt="AI training app" width={120} height={120} className="mx-auto mb-6"/>
+        <Image src="https://ik.imagekit.io/FLATUPGYM/b9d4a676-0903-444c-91d2-50222dc3294f.png?updatedAt=1760340781490" alt="AI training app" width={120} height={120} className="mx-auto mb-6"/>
         <h1 className="text-2xl font-bold text-gray-800 leading-tight mb-2">
             あなたの動きを、もっと美しく。
         </h1>

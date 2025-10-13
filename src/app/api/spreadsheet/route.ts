@@ -66,10 +66,11 @@ export async function POST(req: NextRequest) {
 
     console.log("Successfully appended values to spreadsheet.");
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating sheet:", error);
+    const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: `シートへの書き込みに失敗しました: ${error.message}` },
+      { error: `シートへの書き込みに失敗しました: ${message}` },
       { status: 500 }
     );
   }

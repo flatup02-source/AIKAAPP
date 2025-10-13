@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, ChangeEvent, useEffect } from "react";
-import Image from "next/image";
 import axios from 'axios';
-import { useRouter } from "next/navigation";
 import liff from "@line/liff";
 
 // ☆☆☆ UI/UX最適化指示書に基づき、全面的にリファクタリング ☆☆☆
@@ -18,29 +16,22 @@ export default function AikaFormPage() {
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
-  const [liffMessage, setLiffMessage] = useState("LIFFを初期化中...");
-
-  const router = useRouter();
 
   // --- Effects ---
   useEffect(() => {
     const initializeLiff = async () => {
       try {
         await liff.init({ liffId: "2008276179-41Dz3bbJ" }); // あなたのLIFF ID
-        setLiffMessage("LIFFの初期化に成功！");
 
         if (!liff.isLoggedIn()) {
-          setLiffMessage("LINEにログインしていません。");
           // ログインを促す処理をここに実装可能
           return;
         }
 
         const profile = await liff.getProfile();
         setUserName(profile.displayName);
-        setLiffMessage(`ようこそ、${profile.displayName}さん！`);
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error("LIFF Init Error:", e);
-        setLiffMessage("LIFFの初期化に失敗。");
         setUserName("ゲスト"); // LIFF外でも利用できるようゲスト名を設定
       }
     };
@@ -94,7 +85,7 @@ export default function AikaFormPage() {
       setUploadStatus("success");
       setCurrentStep(4);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       let msg = "アップロードに失敗しました。";
       if (axios.isAxiosError(err)) {

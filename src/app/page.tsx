@@ -58,8 +58,22 @@ export default function AikaFormPage() {
     setErrorMessage("");
 
     try {
-      const idToken = liff.isLoggedIn() ? await liff.getIDToken() : null;
-      const config = idToken ? { headers: { Authorization: `Bearer ${idToken}` } } : {};
+      // 1. ログイン状態の確認
+      if (!liff.isLoggedIn()) {
+        alert("LINEにログインしていません。ページを再読み込みしてログインしてください。");
+        setUploadStatus("idle");
+        return;
+      }
+
+      // 2. IDトークンの取得を試みる
+      const idToken = await liff.getIDToken();
+      if (!idToken) {
+        alert("認証情報の取得に失敗しました。ページの再読み込みや再ログインをお試しください。");
+        setUploadStatus("idle");
+        return;
+      }
+
+      const config = { headers: { Authorization: `Bearer ${idToken}` } };
 
       const signatureResponse = await axios.get('/api/imagekit-sign', config);
       const { signature, expire, token } = signatureResponse.data;
@@ -94,7 +108,11 @@ export default function AikaFormPage() {
       console.error(err);
       let msg = "アップロードに失敗しました。";
       if (axios.isAxiosError(err)) {
-        msg = err.response?.data?.message || err.response?.data?.error || "サーバーでエラーが発生しました。";
+        if (err.response?.status === 401) {
+            msg = "認証エラーが発生しました。再度ログインしてからお試しください。";
+        } else {
+            msg = err.response?.data?.message || err.response?.data?.error || "サーバーでエラーが発生しました。";
+        }
       } else if (err instanceof Error) {
         msg = err.message;
       }

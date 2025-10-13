@@ -1,10 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import path from "path";
+import { env } from "@/env.mjs";
 
 export async function POST(req: NextRequest) {
   console.log("Received request to update spreadsheet.");
+
+  // --- LINE ID Token Authentication ---
+  const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+  if (!token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const channelId = env.LINE_CHANNEL_ID;
+  if (!channelId) {
+    console.error("LINE_CHANNEL_ID is not set in environment variables.");
+    return NextResponse.json({ error: "Configuration error" }, { status: 500 });
+  }
+
   try {
+    const params = new URLSearchParams();
+    params.append("id_token", token);
+    params.append("client_id", channelId);
+
+    const response = await fetch("https://api.line.me/oauth2/v2.1/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("LINE token verification failed:", errorData);
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+    console.log("LINE token verified successfully.");
+    // --- End of Authentication ---
+
     const body = await req.json();
     console.log("Request body:", body);
 
@@ -27,12 +59,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const credentialsEnv = process.env.GOOGLE_CREDENTIALS;
-    console.log("Using GOOGLE_CREDENTIALS from env:", !!credentialsEnv);
-
-    const credentials = credentialsEnv
-      ? JSON.parse(credentialsEnv)
-      : path.join(process.cwd(), "google-credentials.json");
+    const credentials = JSON.parse(env.GOOGLE_CREDENTIALS);
 
     const auth = new google.auth.GoogleAuth({
       credentials,
@@ -58,7 +85,7 @@ export async function POST(req: NextRequest) {
     console.log("Appending values to spreadsheet:", values);
 
     await sheets.spreadsheets.values.append({
-      spreadsheetId: process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID,
+      spreadsheetId: env.NEXT_PUBLIC_GOOGLE_SHEET_ID,
       range: "Form Responses 1",
       valueInputOption: "USER_ENTERED",
       requestBody: {

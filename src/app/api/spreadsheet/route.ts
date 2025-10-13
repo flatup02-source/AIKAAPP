@@ -59,7 +59,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const credentials = JSON.parse(env.GOOGLE_CREDENTIALS_JSON);
+    let credentials;
+    try {
+      credentials = JSON.parse(env.GOOGLE_CREDENTIALS_JSON);
+    } catch (error) {
+      console.error("Failed to parse GOOGLE_CREDENTIALS_JSON:", error);
+      return NextResponse.json(
+        { error: "Google credentials configuration error." },
+        { status: 500 }
+      );
+    }
 
     const auth = new google.auth.GoogleAuth({
       credentials,

@@ -20,21 +20,31 @@ export default function AikaFormPage() {
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
+  const [liffMessage, setLiffMessage] = useState("");
+  const [error, setError] = useState("");
 
   // --- Effects ---
   useEffect(() => {
     const initializeLiff = async () => {
       try {
-        await liff.init({ liffId: "2008276179-41Dz3bbj" });
+        await liff.init({ liffId: "2008276179-41Dz3bbJ" });
+        setLiffMessage("LIFFの初期化に成功！");
+
         if (!liff.isLoggedIn()) {
-          liff.login();
-        } else {
-          const profile = await liff.getProfile();
-          setUserName(profile.displayName);
+          setLiffMessage("LINEにログインしていません。ログインを開始します…");
+          // ★★★ これが修正ポイント！ログイン画面に案内する ★★★
+          liff.login(); 
+          return; // ログイン処理に移行するため、ここで処理を中断
         }
-      } catch (e: unknown) {
-        console.error("LIFF Init Error:", e);
-        setUserName("ゲスト");
+
+        const profile = await liff.getProfile();
+        setUserName(profile.displayName);
+        setLiffMessage(`ようこそ、${profile.displayName}さん！`);
+
+      } catch (e) {
+        console.error(e);
+        setLiffMessage("LIFFの初期化に失敗しました。");
+        setError((e as Error).toString());
       }
     };
     initializeLiff();

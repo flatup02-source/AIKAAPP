@@ -120,9 +120,14 @@ export default function AikaFormPage() {
       setAiComment(comment);
       setViewState("result"); // 結果表示画面に切り替え
 
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("エラーが発生しました。詳細はコンソールを確認してください。");
+      const errorMessage = JSON.stringify(
+        err.response?.data || err.message || err,
+        null,
+        2
+      );
+      alert(`エラー詳細:\n\n${errorMessage}`);
       setViewState("form"); // エラー時はフォームに戻す
     } finally {
       setUploading(false);

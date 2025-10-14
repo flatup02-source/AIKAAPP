@@ -120,10 +120,10 @@ export default function AikaFormPage() {
   };
 
   const themes = [
-    "キレイなフォームになりたい！",
-    "パンチのスピードを上げたい！",
-    "カッコいいコンビネーションを覚えたい！",
-    "とにかく楽しみたい！",
+    "より美しいフォームを手に入れたい",
+    "パンチのスピードを向上させたい",
+    "洗練されたコンビネーションを習得したい",
+    "まずは楽しむことを重視したい",
   ];
   
   // ★★★ ここから、画面表示の切り替え処理を追加 ★★★
@@ -132,7 +132,7 @@ export default function AikaFormPage() {
     return (
       <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white p-4">
           <div className="text-center">
-            <h1 className="text-3xl font-bold mb-4">戦闘力 解析中...</h1>
+            <h1 className="text-3xl font-bold mb-4">分析AIを起動しています…</h1>
             <div className="relative w-64 h-64">
                 <svg className="w-full h-full" viewBox="0 0 100 100">
                     <circle className="text-gray-700" strokeWidth="10" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
@@ -150,7 +150,7 @@ export default function AikaFormPage() {
                 </svg>
                 <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold">{uploadProgress}%</span>
             </div>
-            <p className="mt-4 text-gray-400">AIKA 18号があなたの動きを解析しています...</p>
+            <p className="mt-4 text-gray-400">しばらくお待ちください。</p>
         </div>
       </div>
     );
@@ -186,28 +186,28 @@ export default function AikaFormPage() {
       <div className="w-full max-w-2xl space-y-12">
         <header className="text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800 drop-shadow-sm leading-tight">
-            たった10秒…お前の「戦闘力」、見せてみろ！
+            その10秒が、あなたのフォームを次のレベルへ導く。
           </h1>
           <p className="text-xl md:text-2xl font-semibold text-gray-600 mt-4">
-            AIスカウターが導く！<br />破壊神AIKA 18号のフォーム解析！
+            専属AIトレーナー「AIKA 18号」が、あなたの動きを精密に解析し、パーソナルフィードバックをお届けします。
           </p>
         </header>
 
         {/* ... 以降のフォーム部分は変更なし ... */}
         <div className="flex justify-center">
           <div className="relative p-1 rounded-2xl" style={{boxShadow: '0 0 40px rgba(76, 201, 240, 0.4)'}}>
-            <Image src="/aika-character.jpg" alt="AIコーチ AIKA 18号" width={500} height={500} className="rounded-xl shadow-2xl object-cover" priority />
+            <Image src="https://ik.imagekit.io/FLATUPGYM/b9d4a676-0903-444c-91d2-50222dc3294f.png?updatedAt=1760340781490" alt="AIコーチ AIKA 18号" width={500} height={500} className="rounded-xl shadow-2xl object-cover" priority />
           </div>
         </div>
         <main className="bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-lg space-y-8 border border-white/50">
           <p className="text-center text-sm text-gray-500">{liffMessage}</p>
           <div className="space-y-6">
             <div>
-              <label htmlFor="userName" className="block text-sm font-bold text-gray-700 mb-2">お名前 (LINEでの表示名)</label>
+              <label htmlFor="userName" className="block text-sm font-bold text-gray-700 mb-2">お名前（LINEでの表示名）</label>
               <input type="text" id="userName" value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="LIFFから自動取得中..." className="w-full bg-white/50 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200" readOnly />
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-3">今日のテーマ (1つだけ選んでみてね)</label>
+              <label className="block text-sm font-bold text-gray-700 mb-3">今回のテーマを1つお選びください</label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {themes.map((item) => (
                   <button key={item} onClick={() => setTheme(item)} className={`w-full text-center px-5 py-4 rounded-xl transition-all duration-200 font-semibold text-sm ${ theme === item ? "bg-blue-500 text-white shadow-lg scale-105 transform" : "bg-white/50 text-gray-700 hover:bg-white" }`}>{item}</button>
@@ -215,11 +215,11 @@ export default function AikaFormPage() {
               </div>
             </div>
             <div>
-              <label htmlFor="requests" className="block text-sm font-bold text-gray-700 mb-2">その他の要望・気になることなど</label>
-              <textarea id="requests" rows={4} value={requests} onChange={(e) => setRequests(e.target.value)} placeholder="例：かめはめ波を打つ時の腰のフォームが気になる..." className="w-full bg-white/50 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200" />
+              <label htmlFor="requests" className="block text-sm font-bold text-gray-700 mb-2">ご要望や特に見てほしい点など</label>
+              <textarea id="requests" rows={4} value={requests} onChange={(e) => setRequests(e.target.value)} placeholder="（例：右ストレートの軌道、ステップインのタイミングなど）" className="w-full bg-white/50 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200" />
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">ここから動画をアップロード (10秒以内)</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">こちらから動画をアップロードしてください > （10秒以内の動画をお願いします）</label>
               <label htmlFor="file-upload" className={`mt-2 flex justify-center items-center w-full px-6 py-10 border-2 border-dashed rounded-xl cursor-pointer transition-colors duration-300 ${file ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-blue-400'}`}>
                 <div className="text-center">
                   {file ? (
@@ -231,8 +231,7 @@ export default function AikaFormPage() {
                   ) : (
                     <div>
                       <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 4v.01M28 8l4-4h20v12l-4 4m-32 4l8-8 12 12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                      <p className="mt-2 text-sm text-gray-600">ここをタップして動画を選択</p>
-                      <p className="text-xs text-gray-500 mt-1">動画を送ってアドバイスをもらおう！</p>
+                      <p className="mt-2 text-sm text-gray-600">動画を選択</p>
                     </div>
                   )}
                   <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept="video/*"/>
@@ -240,12 +239,27 @@ export default function AikaFormPage() {
               </label>
             </div>
             <div className="pt-6">
+              <p className="text-center text-sm text-gray-600 mb-4">準備はよろしいですか？ あなたのポテンシャルが、ここから始まります。</p>
               <button onClick={handleUpload} disabled={uploading || !file} className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg text-lg font-bold text-white bg-gradient-to-r from-blue-500 to-teal-400 hover:from-blue-600 hover:to-teal-500 disabled:bg-gray-400 disabled:from-gray-400 disabled:cursor-not-allowed transform hover:scale-105 transition-transform duration-200">
-                {uploading ? `解析中... ${uploadProgress}%` : "AIKA 18号に動画を送る"}
+                {uploading ? `解析中... ${uploadProgress}%` : "解析を依頼する"}
               </button>
             </div>
           </div>
         </main>
+        <footer className="text-left text-sm text-gray-600 bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-white/50">
+          <h3 className="font-bold text-base text-gray-800 mb-3">直接の指導をご希望の方へ</h3>
+          <p className="mb-4">もし操作にご不明な点があったり、AIの解析だけでは物足りないと感じたりした際は、どうぞお気軽にジムへお越しください。</p>
+          
+          <div className="mb-4">
+              <h4 className="font-semibold text-gray-700">【初めての方へ】</h4>
+              <p>インストラクターがマンツーマンで指導する無料体験レッスンもご用意しております。あなたの理想のフォームへ、最短距離で近づきましょう。</p>
+          </div>
+
+          <div>
+              <h4 className="font-semibold text-gray-700">【会員の皆様へ】</h4>
+              <p>ジムにてインストラクターへ直接お声がけくだされば、よりパーソナルなアドバイスも可能です。いつでもお待ちしております。</p>
+          </div>
+        </footer>
       </div>
     </div>
   );

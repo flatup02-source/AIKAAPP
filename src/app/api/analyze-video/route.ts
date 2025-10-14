@@ -72,10 +72,16 @@ export async function POST(req: NextRequest) {
     // ★ STEP 3: 最終結果をフロントエンドに返す ★
     return NextResponse.json(aikasOracle);
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("分析APIエラー:", error);
     // エラーの詳細をフロントに返す
-    const errorMessage = error.response?.data || error.message || "不明なエラー";
+    let errorMessage = "不明なエラー";
+    if (axios.isAxiosError(error)) {
+      errorMessage = JSON.stringify(error.response?.data) || error.message;
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    
     return NextResponse.json(
       { error: "分析中にエラーが発生しました", details: errorMessage },
       { status: 500 }

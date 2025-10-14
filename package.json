@@ -12,6 +12,7 @@
     "node": "20.x"
   },
   "dependencies": {
+    "@google-cloud/aiplatform": "^5.8.0",
     "@google-cloud/vertexai": "^1.10.0",
     "@line/liff": "^2.27.2",
     "@t3-oss/env-nextjs": "^0.13.8",

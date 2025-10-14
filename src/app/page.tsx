@@ -59,7 +59,17 @@ export default function AikaFormPage() {
 
     try {
       // 1. ImageKitに動画をアップロード
-      const signatureResponse = await axios.get("/api/imagekit-sign");
+      const idToken = liff.getIDToken();
+      if (!idToken) {
+        alert("LINEの認証情報を取得できませんでした。再度お試しください。");
+        setViewState("form");
+        return;
+      }
+      const signatureResponse = await axios.get("/api/imagekit-sign", {
+        headers: {
+          'Authorization': `Bearer ${idToken}`
+        }
+      });
       const { signature, expire, token } = signatureResponse.data;
       const formData = new FormData();
       formData.append("file", file);

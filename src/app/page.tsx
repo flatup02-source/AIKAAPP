@@ -120,7 +120,7 @@ export default function AikaFormPage() {
       setAiComment(comment);
       setViewState("result"); // 結果表示画面に切り替え
 
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       console.error(err);
       const errorMessage = JSON.stringify(
         err.response?.data || err.message || err,

@@ -7,6 +7,7 @@ import axios from "axios";
 import liff from "@line/liff";
 
 type ViewState = "form" | "analyzing" | "result";
+type AIPersonality = "default" | "fun" | "pro";
 
 export default function AikaFormPage() {
 
@@ -16,13 +17,15 @@ export default function AikaFormPage() {
   const [userName, setUserName] = useState("");
   const [theme, setTheme] = useState("");
   const [requests, setRequests] = useState("");
-  const [liffMessage, setLiffMessage] = useState("LIFFを初期化中...");
+  const [liffMessage, setLiffMessage] = useState("あなたの最強のパートナー、AI18号を起動しています…");
   
   // ★★★ 新しい状態を追加 ★★★
   const [viewState, setViewState] = useState<ViewState>("form");
   const [powerLevel, setPowerLevel] = useState<number | null>(null);
   const [aiComment, setAiComment] = useState("");
   const [idolFighterName] = useState("那須川天心"); // デフォルトの憧れのファイター
+  const [aiPersonality, setAiPersonality] = useState<AIPersonality>("default");
+  const [aiIntroduction, setAiIntroduction] = useState("");
 
   useEffect(() => {
     const initializeLiff = async () => {
@@ -31,7 +34,9 @@ export default function AikaFormPage() {
         if (liff.isLoggedIn()) {
           const profile = await liff.getProfile();
           setUserName(profile.displayName);
-          setLiffMessage(`ようこそ、${profile.displayName}さん！`);
+          setLiffMessage("LIFFを初期化中..."); // 初期化メッセージを更新
+        } else {
+          setLiffMessage("LIFFにログインしてください。");
         }
       } catch (e) {
         console.error("LIFF Init Error:", e);
@@ -44,6 +49,20 @@ export default function AikaFormPage() {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
+    }
+  };
+
+  const handleThemeSelect = (selectedTheme: string) => {
+    setTheme(selectedTheme);
+    if (selectedTheme === "まずは楽しむことを重視したい") {
+      setAiPersonality("fun");
+      setAiIntroduction("了解！楽しむのが一番だよね！理屈は抜きにして、とにかくカッコよく動けるように、私が最高の相棒になるよ！よろしく！");
+    } else if (selectedTheme === "プロになりたい") {
+      setAiPersonality("pro");
+      setAiIntroduction("覚悟はいいか。プロの世界は甘くない。私からの要求は厳しくなるが、ついてくるなら世界レベルの視点を授けよう。始めようか。");
+    } else {
+      setAiPersonality("default");
+      setAiIntroduction(""); // 他のテーマでは特別な紹介文はなし
     }
   };
 
@@ -98,6 +117,7 @@ export default function AikaFormPage() {
         videoUrl,
         idolFighterName,
         liffUserId: liff.getIDToken() ?? undefined,
+        theme: theme, // personalityを決定するためにthemeを送信
       });
 
       const { power_level, comment } = analysisResponse.data;
@@ -139,6 +159,8 @@ export default function AikaFormPage() {
     "パンチのスピードを向上させたい",
     "洗練されたコンビネーションを習得したい",
     "まずは楽しむことを重視したい",
+    "プロになりたい",
+    "試合に出てみたい",
   ];
   
   // ★★★ ここから、画面表示の切り替え処理を追加 ★★★
@@ -147,7 +169,7 @@ export default function AikaFormPage() {
     return (
       <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white p-4">
           <div className="text-center">
-            <h1 className="text-3xl font-bold mb-4">分析AIを起動しています…</h1>
+            <h1 className="text-3xl font-bold mb-4">集中…今、君の未来を計算している…</h1>
             <div className="relative w-64 h-64">
                 <svg className="w-full h-full" viewBox="0 0 100 100">
                     <circle className="text-gray-700" strokeWidth="10" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
@@ -165,19 +187,40 @@ export default function AikaFormPage() {
                 </svg>
                 <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold">{uploadProgress}%</span>
             </div>
-            <p className="mt-4 text-gray-400">しばらくお待ちください。</p>
         </div>
       </div>
     );
   }
 
   if (viewState === "result") {
+    const renderResultContent = () => {
+      switch (aiPersonality) {
+        case 'fun':
+          return {
+            title: `今日のスタイルポイントは【${powerLevel}点】！次は100点目指そう！`,
+            commentIntro: "見つけたよ！君の動きがもっと最高になる、とっておきのヒントを３つ！",
+          };
+        case 'pro':
+          return {
+            title: `現在のフォーム効率は【${powerLevel}%】。次の解析までに75%を超えることが当面の目標だ。`,
+            commentIntro: "解析完了。現状の課題と、改善のための具体的処方を3点提示する。",
+          };
+        default:
+          return {
+            title: `戦闘力【${powerLevel?.toLocaleString()}】`,
+            commentIntro: "神託の啓示",
+          };
+      }
+    };
+
+    const { title, commentIntro } = renderResultContent();
+
     return (
         <div className="min-h-screen flex items-center justify-center text-center p-4" style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
             <div className="bg-white/80 backdrop-blur-xl p-8 md:p-12 rounded-2xl shadow-lg max-w-lg w-full">
-                <h1 className="text-2xl font-bold text-gray-800 mb-2">神託の啓示</h1>
-                <p className="text-7xl md:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-teal-400 my-4">
-                    {powerLevel?.toLocaleString()}
+                <h1 className="text-2xl font-bold text-gray-800 mb-2">{commentIntro}</h1>
+                <p className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-teal-400 my-4">
+                    {title}
                 </p>
                 <p className="text-left text-gray-600 whitespace-pre-wrap">{aiComment}</p>
                 <button
@@ -215,26 +258,35 @@ export default function AikaFormPage() {
           </div>
         </div>
         <main className="bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-lg space-y-8 border border-white/50">
-          <p className="text-center text-sm text-gray-500">{liffMessage}</p>
           <div className="space-y-6">
             <div>
               <label htmlFor="userName" className="block text-sm font-bold text-gray-700 mb-2">お名前（LINEでの表示名）</label>
               <input type="text" id="userName" value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="LIFFから自動取得中..." className="w-full bg-white/50 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200" readOnly />
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-3">今回のテーマを1つお選びください</label>
+              <div className="text-center mb-4">
+                <p className="font-bold text-gray-800">{userName}さん、こんにちは。</p>
+                <p className="font-bold text-gray-800">AI18号だ。君が求める未来へ、私が導く。</p>
+                <p className="text-sm text-gray-600 mt-2">今回のテーマを1つ選んでくれ。それによって、私からの言葉も変わってくる。</p>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {themes.map((item) => (
-                  <button key={item} onClick={() => setTheme(item)} className={`w-full text-center px-5 py-4 rounded-xl transition-all duration-200 font-semibold text-sm ${ theme === item ? "bg-blue-500 text-white shadow-lg scale-105 transform" : "bg-white/50 text-gray-700 hover:bg-white" }`}>{item}</button>
+                  <button key={item} onClick={() => handleThemeSelect(item)} className={`w-full text-center px-5 py-4 rounded-xl transition-all duration-200 font-semibold text-sm ${ theme === item ? "bg-blue-500 text-white shadow-lg scale-105 transform" : "bg-white/50 text-gray-700 hover:bg-white" }`}>{item}</button>
                 ))}
               </div>
+              {aiIntroduction && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg text-center">
+                  <p className="text-sm text-blue-800 font-semibold">{aiIntroduction}</p>
+                </div>
+              )}
             </div>
             <div>
               <label htmlFor="requests" className="block text-sm font-bold text-gray-700 mb-2">ご要望や特に見てほしい点など</label>
               <textarea id="requests" rows={4} value={requests} onChange={(e) => setRequests(e.target.value)} placeholder="（例：右ストレートの軌道、ステップインのタイミングなど）" className="w-full bg-white/50 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200" />
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">こちらから動画をアップロードしてください &gt; （10秒以内の動画をお願いします）</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">私に、君の「のびしろ」を見せてくれ。</label>
+              <p className="text-sm text-gray-600 mb-2">完成されたフォームには興味ない。今の君の動きに眠る、未来の強さの原石を私が見つけ出す。安心して、今の全てをぶつけてみてくれ。（10秒以内の動画をどうぞ）</p>
               <label htmlFor="file-upload" className={`mt-2 flex justify-center items-center w-full px-6 py-10 border-2 border-dashed rounded-xl cursor-pointer transition-colors duration-300 ${file ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-blue-400'}`}>
                 <div className="text-center">
                   {file ? (
@@ -254,9 +306,8 @@ export default function AikaFormPage() {
               </label>
             </div>
             <div className="pt-6">
-              <p className="text-center text-sm text-gray-600 mb-4">準備はよろしいですか？ あなたのポテンシャルが、ここから始まります。</p>
               <button onClick={handleUpload} disabled={uploading || !file} className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg text-lg font-bold text-white bg-gradient-to-r from-blue-500 to-teal-400 hover:from-blue-600 hover:to-teal-500 disabled:bg-gray-400 disabled:from-gray-400 disabled:cursor-not-allowed transform hover:scale-105 transition-transform duration-200">
-                {uploading ? `解析中... ${uploadProgress}%` : "解析を依頼する"}
+                {uploading ? `解析中... ${uploadProgress}%` : "18号、頼んだ！"}
               </button>
             </div>
           </div>

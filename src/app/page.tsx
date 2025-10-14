@@ -219,7 +219,7 @@ export default function AikaFormPage() {
               <textarea id="requests" rows={4} value={requests} onChange={(e) => setRequests(e.target.value)} placeholder="（例：右ストレートの軌道、ステップインのタイミングなど）" className="w-full bg-white/50 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200" />
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">こちらから動画をアップロードしてください > （10秒以内の動画をお願いします）</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">こちらから動画をアップロードしてください &gt; （10秒以内の動画をお願いします）</label>
               <label htmlFor="file-upload" className={`mt-2 flex justify-center items-center w-full px-6 py-10 border-2 border-dashed rounded-xl cursor-pointer transition-colors duration-300 ${file ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-blue-400'}`}>
                 <div className="text-center">
                   {file ? (

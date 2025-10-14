@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
-import path from "path";
+
 import { env } from "@/env.mjs";
 
 export async function POST(req: NextRequest) {

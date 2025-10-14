@@ -3,13 +3,13 @@
 import { useState, ChangeEvent, useEffect } from "react";
 import Image from "next/image";
 import axios from "axios";
-import { useRouter } from "next/navigation";
+
 import liff from "@line/liff";
 
 type ViewState = "form" | "analyzing" | "result";
 
 export default function AikaFormPage() {
-  const router = useRouter();
+
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -22,7 +22,7 @@ export default function AikaFormPage() {
   const [viewState, setViewState] = useState<ViewState>("form");
   const [powerLevel, setPowerLevel] = useState<number | null>(null);
   const [aiComment, setAiComment] = useState("");
-  const [idolFighterName, setIdolFighterName] = useState("那須川天心"); // デフォルトの憧れのファイター
+  const [idolFighterName] = useState("那須川天心"); // デフォルトの憧れのファイター
 
   useEffect(() => {
     const initializeLiff = async () => {

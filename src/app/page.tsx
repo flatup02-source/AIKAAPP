@@ -1,415 +1,252 @@
 "use client";
 
 import { useState, ChangeEvent, useEffect } from "react";
-import axios from 'axios';
+import Image from "next/image";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 import liff from "@line/liff";
-import Image from 'next/image';
 
-import { env } from "@/env.mjs";
-
-// ☆☆☆ 30-40代女性向けにUI/UXの文言を全面リファクタリング ☆☆☆
+type ViewState = "form" | "analyzing" | "result";
 
 export default function AikaFormPage() {
-  // --- State Management ---
-  const [currentStep, setCurrentStep] = useState(1);
+  const router = useRouter();
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [userName, setUserName] = useState("");
-  const [genre, setGenre] = useState("");
   const [theme, setTheme] = useState("");
   const [requests, setRequests] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "success" | "error">("idle");
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [liffMessage, setLiffMessage] = useState("");
-  const [error, setError] = useState("");
+  const [liffMessage, setLiffMessage] = useState("LIFFを初期化中...");
+  
+  // ★★★ 新しい状態を追加 ★★★
+  const [viewState, setViewState] = useState<ViewState>("form");
+  const [powerLevel, setPowerLevel] = useState<number | null>(null);
+  const [aiComment, setAiComment] = useState("");
+  const [idolFighterName, setIdolFighterName] = useState("那須川天心"); // デフォルトの憧れのファイター
 
-  // --- Effects ---
   useEffect(() => {
     const initializeLiff = async () => {
       try {
         await liff.init({ liffId: "2008276179-41Dz3bbJ" });
-        setLiffMessage("LIFFの初期化に成功！");
-
-        if (!liff.isLoggedIn()) {
-          setLiffMessage("LINEにログインしていません。ログインを開始します…");
-          // ★★★ これが修正ポイント！ログイン画面に案内する ★★★
-          liff.login(); 
-          return; // ログイン処理に移行するため、ここで処理を中断
+        if (liff.isLoggedIn()) {
+          const profile = await liff.getProfile();
+          setUserName(profile.displayName);
+          setLiffMessage(`ようこそ、${profile.displayName}さん！`);
         }
-
-        const profile = await liff.getProfile();
-        setUserName(profile.displayName);
-        setLiffMessage(`ようこそ、${profile.displayName}さん！`);
-
       } catch (e) {
-        console.error(e);
-        setLiffMessage("LIFFの初期化に失敗しました。");
-        setError((e as Error).toString());
+        console.error("LIFF Init Error:", e);
+        setLiffMessage("LIFFの初期化に失敗。");
       }
     };
     initializeLiff();
   }, []);
 
-  // --- Handlers ---
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const selectedFile = e.target.files[0];
-      if (selectedFile.size > 10 * 1024 * 1024) { // 10MB
-        setErrorMessage("ファイルサイズが10MBを超えています。10MB以下のファイルを選択してください。");
-        setFile(null);
-      } else {
-        setFile(selectedFile);
-        setErrorMessage("");
-      }
+      setFile(e.target.files[0]);
     }
   };
 
+  // ★★★ これが最終形態のアップロード処理だ！ ★★★
   const handleUpload = async () => {
-    if (!file) return;
-
-    setUploadStatus("uploading");
+    if (!file) {
+      alert("まず動画ファイルを選択してください。");
+      return;
+    }
+    setUploading(true);
     setUploadProgress(0);
-    setErrorMessage("");
+    setViewState("analyzing"); // 解析中の画面に切り替え
 
     try {
-      // 1. ログイン状態の確認
-      if (!liff.isLoggedIn()) {
-        alert("LINEにログインしていません。ページを再読み込みしてログインしてください。");
-        setUploadStatus("idle");
-        return;
-      }
-
-      // 2. IDトークンの取得を試みる
-      const idToken = await liff.getIDToken();
-      if (!idToken) {
-        alert("認証情報の取得に失敗しました。ページの再読み込みや再ログインをお試しください。");
-        setUploadStatus("idle");
-        return;
-      }
-
-      const config = { headers: { Authorization: `Bearer ${idToken}` } };
-
-      // 署名取得
-      console.log("Fetching ImageKit signature...");
-      const signatureResponse = await axios.get('/api/imagekit-sign', config);
+      // 1. ImageKitに動画をアップロード
+      const signatureResponse = await axios.get("/api/imagekit-sign");
       const { signature, expire, token } = signatureResponse.data;
-      console.log("ImageKit signature fetched successfully.");
-
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("publicKey", env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY);
+      formData.append("publicKey", process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!);
       formData.append("signature", signature);
       formData.append("expire", expire);
       formData.append("token", token);
       formData.append("fileName", file.name);
 
-      // ImageKitへのアップロード
-      console.log("Uploading to ImageKit...");
-      const imagekitResponse = await axios.post('https://upload.imagekit.io/api/v1/files/upload', formData, {
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress(percentCompleted);
-          }
-        },
-      });
-      const videoUrl = imagekitResponse.data.url;
-      console.log("Upload to ImageKit successful:", videoUrl);
-
-      // スプレッドシートへの書き込み
-      console.log("Writing to spreadsheet...");
-      await axios.post('/api/spreadsheet', {
-        userName, genre, theme, requests, videoUrl,
-        fileName: file.name, fileType: file.type, fileSize: file.size,
-      }, config);
-      console.log("Spreadsheet write successful.");
-      
-      setUploadStatus("success");
-      setCurrentStep(5); // Go to final step
-
-    } catch (err: unknown) {
-      console.error("An error occurred during the upload process:", err);
-
-      let msg = "アップロードに失敗しました。";
-      if (axios.isAxiosError(err)) {
-        console.error("Axios error details:", err.response?.data);
-        if (err.response?.status === 401) {
-            msg = "認証エラーが発生しました。再度ログインしてからお試しください。";
-        } else {
-            const errorDetail = err.response?.data?.message || "サーバーでエラーが発生しました。";
-            msg = `アップロードに失敗しました: ${errorDetail}`;
+      const imagekitResponse = await axios.post(
+        "https://upload.imagekit.io/api/v1/files/upload",
+        formData,
+        {
+          onUploadProgress: (progressEvent) => {
+            if(progressEvent.total) {
+                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                setUploadProgress(percentCompleted);
+            }
+          },
         }
-      } else if (err instanceof Error) {
-        msg = err.message;
-      }
-      setErrorMessage(msg);
-      setUploadStatus("error");
-      setCurrentStep(5); // Go to final step
+      );
+      const videoUrl = imagekitResponse.data.url;
+
+      // 2. 新しい神経回路(/api/analyze-video)に分析を依頼！
+      const analysisResponse = await axios.post("/api/analyze-video", {
+        videoUrl,
+        idolFighterName,
+        liffUserId: liff.getIDToken() ?? undefined,
+      });
+
+      const { power_level, comment } = analysisResponse.data;
+
+      // 3. 全てのデータをスプレッドシートに記録
+      await axios.post("/api/spreadsheet", {
+        userName,
+        theme,
+        requests,
+        videoUrl,
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        powerLevel: power_level, // 戦闘力も記録！
+        aiComment: comment,       // コメントも記録！
+      });
+      
+      // 4. 結果を画面に表示する
+      setPowerLevel(power_level);
+      setAiComment(comment);
+      setViewState("result"); // 結果表示画面に切り替え
+
+    } catch (err) {
+      console.error(err);
+      alert("エラーが発生しました。詳細はコンソールを確認してください。");
+      setViewState("form"); // エラー時はフォームに戻す
+    } finally {
+      setUploading(false);
     }
   };
 
-  const restart = () => {
-    setGenre("");
-    setTheme("");
-    setRequests("");
-    setFile(null);
-    setUploadStatus("idle");
-    setUploadProgress(0);
-    setErrorMessage("");
-    setCurrentStep(1);
-  };
-
-  // --- Render Functions for Steps ---
-
-  const renderStep1 = () => (
-    <div className="text-center">
-        <Image src="https://ik.imagekit.io/FLATUPGYM/b9d4a676-0903-444c-91d2-50222dc3294f.png?updatedAt=1760340781490" alt="AI training app" width={120} height={120} className="mx-auto mb-6"/>
-        <h1 className="text-2xl font-bold text-gray-800 leading-tight mb-2">
-            あなたの動きを、もっと美しく。
-        </h1>
-        <p className="text-gray-600 mb-8">AIがひろえる、新しいトレーニング習慣</p>
-        <button onClick={() => setCurrentStep(2)} className="btn-primary">
-            トレーニングを始める
-        </button>
-    </div>
-  );
-
-  const genres = [
-    { title: "ボクシング", icon: "🥊" },
-    { title: "キックボクシング", icon: "💥" },
-    { title: "総合格闘技", icon: "🤼" },
-  ];
-
-  const renderStep2 = () => (
-    <div className="text-center">
-      <h2 className="text-xl font-bold mb-6">どのトレーニングに挑戦しますか？</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {genres.map((item) => (
-          <div
-            key={item.title}
-            onClick={() => { setGenre(item.title); setCurrentStep(3); }}
-            className={`card ${genre === item.title ? "selected" : ""}`}
-          >
-            <span className="text-3xl">{item.icon}</span>
-            <span className="font-semibold mt-2">{item.title}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
   const themes = [
-    { title: "美しいフォームを身につけたい", icon: "✨" },
-    { title: "パンチのスピードを上げたい", icon: "✨" },
-    { title: "かっこいい連続技を覚えたい", icon: "✨" },
-    { title: "まずは楽しみながらやってみたい", icon: "✨" },
+    "キレイなフォームになりたい！",
+    "パンチのスピードを上げたい！",
+    "カッコいいコンビネーションを覚えたい！",
+    "とにかく楽しみたい！",
   ];
+  
+  // ★★★ ここから、画面表示の切り替え処理を追加 ★★★
 
-  const renderStep3 = () => (
-    <div className="text-center">
-      <h2 className="text-xl font-bold mb-6">あなたの目標を教えてください</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {themes.map((item) => (
-          <div
-            key={item.title}
-            onClick={() => { setTheme(item.title); }}
-            className={`card-sm ${theme === item.title ? "selected" : ""}`}
-          >
-            <span className="text-2xl mr-3">{item.icon}</span>
-            <span>{item.title}</span>
-          </div>
-        ))}
-      </div>
-       <textarea
-          id="requests"
-          rows={3}
-          value={requests}
-          onChange={(e) => setRequests(e.target.value)}
-          placeholder="その他、気になるポイントがあればご記入ください"
-          className="w-full bg-gray-100 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200 mt-6"
-        />
-        <button onClick={() => setCurrentStep(4)} className="btn-primary mt-6">
-            次へ進む
-        </button>
-    </div>
-  );
-
-  const renderStep4 = () => (
-    <div className="text-center">
-      <h2 className="text-xl font-bold mb-4">動画を準備してくださいね</h2>
-      
-      <div className="bg-gray-50 border border-gray-200 text-gray-700 rounded-lg p-4 text-sm mb-6">
-        <h3 className="font-bold mb-2 text-left">動画のポイント</h3>
-        <ul className="list-disc list-inside text-left space-y-1">
-          <li>10秒以内の動画でお願いします</li>
-          <li>正面か横から全身が映るように</li>
-          <li>背景はシンプルがベストです</li>
-        </ul>
-      </div>
-
-      {uploadStatus === "uploading" ? (
-        <div>
-          <p className="mb-4 font-semibold">AIが解析中です...</p>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div className="bg-primary h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
-          </div>
-          <p className="mt-2 text-lg font-bold">{uploadProgress}%</p>
+  if (viewState === "analyzing") {
+    return (
+      <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white p-4">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-4">戦闘力 解析中...</h1>
+            <div className="relative w-64 h-64">
+                <svg className="w-full h-full" viewBox="0 0 100 100">
+                    <circle className="text-gray-700" strokeWidth="10" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
+                    <circle 
+                        className="text-blue-500"
+                        strokeWidth="10"
+                        strokeDasharray={2 * Math.PI * 45}
+                        strokeDashoffset={(2 * Math.PI * 45) * (1 - uploadProgress / 100)}
+                        strokeLinecap="round"
+                        stroke="currentColor"
+                        fill="transparent"
+                        r="45" cx="50" cy="50"
+                        style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}
+                    />
+                </svg>
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold">{uploadProgress}%</span>
+            </div>
+            <p className="mt-4 text-gray-400">AIKA 18号があなたの動きを解析しています...</p>
         </div>
-      ) : (
-        <>
-          <label htmlFor="videoFile" className="file-label">
-            {file ? `選択中: ${file.name}` : "ここをタップして動画を選ぶ"}
-          </label>
-          <input type="file" id="videoFile" accept="video/*" onChange={handleFileChange} className="hidden" />
-          {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
-          <button onClick={handleUpload} className="btn-primary mt-4" disabled={!file}>
-            送信する
-          </button>
-        </>
-      )}
-    </div>
-  );
-
-  const renderStep5 = () => (
-    <div className="text-center">
-      {uploadStatus === "success" ? (
-        <>
-          <div className="text-6xl mb-4">🎉</div>
-          <h2 className="text-2xl font-bold mb-4">ありがとうございます！</h2>
-          <div className="bg-gray-100 p-4 rounded-lg text-left mb-8">
-              <h3 className="font-bold text-center mb-2">解析時間のご案内</h3>
-              <p className="text-sm text-gray-700">動画の解析には、<span className="font-bold">半日から1日ほど</span>お時間をいただく場合がございます。解析が完了しましたら、LINEのメッセージでお知らせしますので、しばらくお待ちくださいませ。</p>
-          </div>
-          <button onClick={restart} className="btn-secondary">
-            別のトレーニングを試す
-          </button>
-        </>
-      ) : (
-        <>
-          <div className="text-6xl mb-4">❌</div>
-          <h2 className="text-2xl font-bold mb-4">エラーが発生しました</h2>
-          <p className="text-red-600 bg-red-100 p-3 rounded-lg mb-8">{errorMessage}</p>
-          <button onClick={() => setCurrentStep(4)} className="btn-primary">
-            もう一度試す
-          </button>
-        </>
-      )}
-    </div>
-  );
-
-  // --- Main Render ---
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
-      <div className="container">
-        {currentStep === 1 && renderStep1()}
-        {currentStep === 2 && renderStep2()}
-        {currentStep === 3 && renderStep3()}
-        {currentStep === 4 && renderStep4()}
-        {currentStep === 5 && renderStep5()}
       </div>
+    );
+  }
 
-      <style jsx global>{`
-        .container {
-          width: 90%;
-          max-width: 420px; /* Slightly wider for better text flow */
-          background: var(--white);
-          border-radius: 16px;
-          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-          padding: 2rem;
-          text-align: center;
-          transition: all 0.3s ease-in-out;
-        }
-        .btn-primary, .btn-secondary {
-          width: 100%;
-          padding: 15px;
-          border: none;
-          border-radius: 8px;
-          font-size: 1rem;
-          font-weight: bold;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        .btn-primary {
-          background-color: var(--primary-color);
-          color: var(--white);
-        }
-        .btn-primary:disabled {
-          background-color: #BDBDBD;
-          cursor: not-allowed;
-        }
-        .btn-primary:not(:disabled):hover {
-          background-color: #00897B;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 15px rgba(0, 191, 165, 0.3);
-        }
-        .btn-secondary {
-          background-color: #E0E0E0;
-          color: var(--text-color);
-        }
-        .btn-secondary:hover {
-          background-color: #BDBDBD;
-        }
-        .card {
-          padding: 20px;
-          border: 2px solid #E0E0E0;
-          border-radius: 12px;
-          font-size: 1.1rem;
-          cursor: pointer;
-          transition: all 0.2s;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-        }
-        .card:hover {
-          border-color: var(--primary-color);
-          background-color: #E0F2F1;
-        }
-        .card.selected {
-          border-color: var(--primary-color);
-          background-color: var(--primary-color);
-          color: var(--white);
-          transform: scale(1.05);
-          box-shadow: 0 5px 20px rgba(0, 191, 165, 0.3);
-        }
-        .card-sm {
-          padding: 15px;
-          border: 2px solid #E0E0E0;
-          border-radius: 12px;
-          font-size: 1rem;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .card-sm:hover {
-          border-color: var(--primary-color);
-          background-color: #E0F2F1;
-        }
-        .card-sm.selected {
-          border-color: var(--primary-color);
-          background-color: var(--primary-color);
-          color: var(--white);
-        }
-        .file-label {
-          display: block;
-          padding: 2rem;
-          border: 2px dashed #E0E0E0;
-          border-radius: 12px;
-          cursor: pointer;
-          margin-bottom: 1rem;
-          transition: all 0.2s;
-          font-weight: 500;
-          color: #757575;
-        }
-        .file-label:hover {
-          border-color: var(--primary-color);
-          background-color: #E0F2F1;
-        }
-      `}</style>
+  if (viewState === "result") {
+    return (
+        <div className="min-h-screen flex items-center justify-center text-center p-4" style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
+            <div className="bg-white/80 backdrop-blur-xl p-8 md:p-12 rounded-2xl shadow-lg max-w-lg w-full">
+                <h1 className="text-2xl font-bold text-gray-800 mb-2">神託の啓示</h1>
+                <p className="text-7xl md:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-teal-400 my-4">
+                    {powerLevel?.toLocaleString()}
+                </p>
+                <p className="text-left text-gray-600 whitespace-pre-wrap">{aiComment}</p>
+                <button
+                    onClick={() => setViewState("form")}
+                    className="mt-8 w-full max-w-xs mx-auto flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-lg text-lg font-semibold text-white bg-gray-700 hover:bg-gray-800 transform hover:scale-105 transition-transform duration-200"
+                >
+                    もう一度挑戦する
+                </button>
+            </div>
+        </div>
+    );
+  }
+
+  return ( // viewStateが'form'の場合の元のフォーム
+    <div 
+      className="min-h-screen text-gray-800 flex justify-center py-12 px-4"
+      style={{
+        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)'
+      }}
+    >
+      <div className="w-full max-w-2xl space-y-12">
+        <header className="text-center">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 drop-shadow-sm leading-tight">
+            たった10秒…お前の「戦闘力」、見せてみろ！
+          </h1>
+          <p className="text-xl md:text-2xl font-semibold text-gray-600 mt-4">
+            AIスカウターが導く！<br />破壊神AIKA 18号のフォーム解析！
+          </p>
+        </header>
+
+        {/* ... 以降のフォーム部分は変更なし ... */}
+        <div className="flex justify-center">
+          <div className="relative p-1 rounded-2xl" style={{boxShadow: '0 0 40px rgba(76, 201, 240, 0.4)'}}>
+            <Image src="/aika-character.jpg" alt="AIコーチ AIKA 18号" width={500} height={500} className="rounded-xl shadow-2xl object-cover" priority />
+          </div>
+        </div>
+        <main className="bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-lg space-y-8 border border-white/50">
+          <p className="text-center text-sm text-gray-500">{liffMessage}</p>
+          <div className="space-y-6">
+            <div>
+              <label htmlFor="userName" className="block text-sm font-bold text-gray-700 mb-2">お名前 (LINEでの表示名)</label>
+              <input type="text" id="userName" value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="LIFFから自動取得中..." className="w-full bg-white/50 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200" readOnly />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-3">今日のテーマ (1つだけ選んでみてね)</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {themes.map((item) => (
+                  <button key={item} onClick={() => setTheme(item)} className={`w-full text-center px-5 py-4 rounded-xl transition-all duration-200 font-semibold text-sm ${ theme === item ? "bg-blue-500 text-white shadow-lg scale-105 transform" : "bg-white/50 text-gray-700 hover:bg-white" }`}>{item}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label htmlFor="requests" className="block text-sm font-bold text-gray-700 mb-2">その他の要望・気になることなど</label>
+              <textarea id="requests" rows={4} value={requests} onChange={(e) => setRequests(e.target.value)} placeholder="例：かめはめ波を打つ時の腰のフォームが気になる..." className="w-full bg-white/50 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200" />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">ここから動画をアップロード (10秒以内)</label>
+              <label htmlFor="file-upload" className={`mt-2 flex justify-center items-center w-full px-6 py-10 border-2 border-dashed rounded-xl cursor-pointer transition-colors duration-300 ${file ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-blue-400'}`}>
+                <div className="text-center">
+                  {file ? (
+                    <div>
+                      <svg className="mx-auto h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <p className="mt-2 font-semibold text-green-600">{file.name}</p>
+                      <p className="text-xs text-gray-500 mt-1">ファイル選択済み！</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 4v.01M28 8l4-4h20v12l-4 4m-32 4l8-8 12 12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                      <p className="mt-2 text-sm text-gray-600">ここをタップして動画を選択</p>
+                      <p className="text-xs text-gray-500 mt-1">動画を送ってアドバイスをもらおう！</p>
+                    </div>
+                  )}
+                  <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept="video/*"/>
+                </div>
+              </label>
+            </div>
+            <div className="pt-6">
+              <button onClick={handleUpload} disabled={uploading || !file} className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg text-lg font-bold text-white bg-gradient-to-r from-blue-500 to-teal-400 hover:from-blue-600 hover:to-teal-500 disabled:bg-gray-400 disabled:from-gray-400 disabled:cursor-not-allowed transform hover:scale-105 transition-transform duration-200">
+                {uploading ? `解析中... ${uploadProgress}%` : "AIKA 18号に動画を送る"}
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

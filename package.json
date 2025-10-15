@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "echo $GOOGLE_CREDENTIALS_JSON > google-credentials.json && echo \"Public Key: $NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY\" && echo \"Private Key: $IMAGEKIT_PRIVATE_KEY\" && echo \"URL Endpoint: $NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT\" && next build --turbopack",
+    "build": "echo \"Public Key: $NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY\" && echo \"Private Key: $IMAGEKIT_PRIVATE_KEY\" && echo \"URL Endpoint: $NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT\" && next build --turbopack",
     "start": "next start",
     "lint": "eslint"
   },

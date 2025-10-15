@@ -1,4 +1,4 @@
-# 1) Build
+# Build stage
 FROM node:18-alpine AS builder
 ENV NODE_ENV=production
 WORKDIR /app
@@ -7,7 +7,7 @@ RUN npm ci --legacy-peer-deps
 COPY . .
 RUN npm run build
 
-# 2) Run
+# Run stage
 FROM node:18-alpine AS runner
 ENV NODE_ENV=production
 WORKDIR /app

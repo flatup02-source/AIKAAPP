@@ -1,22 +1,32 @@
-// Dockerfile
-FROM node:20-alpine
+# Dockerfile
+# ベースイメージ：Node 20 の軽量版
+FROM node:20-alpine AS base
 
-# 作業フォルダ
+# 作業ディレクトリ
 WORKDIR /app
 
-# まず依存関係を入れる（キャッシュを効かせるため先にpackage*.jsonだけ）
-COPY package*.json ./
-RUN npm ci && npm cache clean --force
+# 依存関係だけ先にコピーしてキャッシュを最大化
+COPY package.json package-lock.json ./
+RUN npm ci --only=production && npm cache clean --force
 
-# アプリ本体をコピー
+# アプリのソースをコピー（.dockerignore で秘密や不要物は除外しておく）
 COPY . .
 
-# 本番用にビルド
+# Next.js を本番ビルド
+ENV NODE_ENV=production
 RUN npm run build
 
-# Cloud Run はポート8080を使う
+# 非rootユーザーで実行（最低限の権限に）
+RUN addgroup -g 1001 nodegrp && adduser -u 1001 -G nodegrp -D nodeusr
+USER nodeusr
+
+# Cloud Run 互換のポート設定（必要に応じて変更）
 ENV PORT=8080
 EXPOSE 8080
 
-# 起動コマンド（Next.jsを8080で起動）
+# 健康チェック（任意：/ で200が返るなら）
+# HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+#   CMD wget -qO- http://localhost:${PORT}/ || exit 1
+
+# 起動コマンド
 CMD ["npm", "run", "start"]

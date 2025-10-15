@@ -1,5 +1,45 @@
-// .dockerignore
-node_modules
-.next/cache
-.git
+# .dockerignore
 
+# 依存物とビルド生成物（コンテナ内で再生成するので送らない）
+node_modules
+.next
+out
+dist
+
+# キャッシュ・ログ・一時ファイル
+.next/cache
+.cache
+coverage
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+*.log
+
+# VCS・CI関連
+.git
+.gitignore
+.github
+.gitlab-ci.yml
+
+# 環境変数・秘密（絶対に送らない）
+.env
+.env.*
+*.key
+*.pem
+*.secret
+*.secrets
+*.crt
+credentials/
+**/credentials/*.json
+
+# OS/IDEごみ
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+
+# 静的生成で未使用の原稿など（必要なら調整）
+**/*.psd
+**/*.ai
+**/*.sketch

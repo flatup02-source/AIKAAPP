@@ -1,15 +1,16 @@
+// package.json
 {
   "name": "aika-form-app",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "echo \"Public Key: $NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY\" && echo \"Private Key: $IMAGEKIT_PRIVATE_KEY\" && echo \"URL Endpoint: $NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT\" && next build --turbopack",
-    "start": "next start",
+    "build": "echo \"Public Key: $NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY\" && echo \"Private Key: $IMAGEKIT_PRIVATE_KEY\" && echo \"URL Endpoint: $NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT\" && next build",
+    "start": "next start -p 8080",
     "lint": "eslint"
   },
   "engines": {
-    "node": "18.x"
+    "node": "20.x"
   },
   "dependencies": {
     "@google-cloud/aiplatform": "^5.8.0",
@@ -36,12 +37,5 @@
     "eslint-config-next": "15.5.4",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
-}
-// package.json の一部
-{
-  "scripts": {
-    "build": "next build",
-    "start": "next start -p 8080"
   }
 }

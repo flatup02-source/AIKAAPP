@@ -38,3 +38,10 @@
     "typescript": "^5"
   }
 }
+// package.json の一部
+{
+  "scripts": {
+    "build": "next build",
+    "start": "next start -p 8080"
+  }
+}

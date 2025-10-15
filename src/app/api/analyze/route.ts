@@ -1,30 +1,33 @@
 // 対象のAPIファイル (例: src/app/api/analyze/route.ts)
 
 import { PredictionServiceClient } from '@google-cloud/aiplatform';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 export async function POST(req: Request) {
   try {
     // --- ▼▼▼【最終版】認証コード ▼▼▼ ---
 
-    // 1. 環境変数（中身はBase64）を読み込む
-    const credentialsBase64 = process.env.GOOGLE_CREDENTIALS_JSON;
-
-    if (!credentialsBase64) {
-      // 環境変数が存在しない場合のエラー
-      console.error('致命的エラー: GOOGLE_CREDENTIALS_JSON 環境変数が定義されていません。');
+    // 1. ビルド時に作成された認証情報ファイル（中身はBase64）を読み込む
+    let credentials;
+    try {
+      const credentialsPath = join(process.cwd(), 'google-credentials.json');
+      const credentialsBase64 = readFileSync(credentialsPath, 'utf8');
+      
+      // 2. Base64文字列を、元のJSON文字列にデコード（復元）する
+      const credentialsJsonString = Buffer.from(credentialsBase64.trim(), 'base64').toString('utf8');
+      
+      // 3. デコードしたJSON文字列を、JavaScriptオブジェクトに変換（パース）する
+      credentials = JSON.parse(credentialsJsonString);
+    } catch (fileError) {
+      console.error('致命的エラー: 認証情報ファイル `google-credentials.json` が見つからないか、読み込みに失敗しました。', fileError);
       return new Response(JSON.stringify({
-        error: "サーバー設定エラー: 認証情報が設定されていません。"
+        error: "サーバー設定エラー: 認証情報が正しく設定されていません。"
       }), { 
         status: 500,
         headers: { 'Content-Type': 'application/json' },
       });
     }
-
-    // 2. Base64文字列を、元のJSON文字列にデコード（復元）する
-    const credentialsJsonString = Buffer.from(credentialsBase64, 'base64').toString('utf8');
-    
-    // 3. デコードしたJSON文字列を、JavaScriptオブジェクトに変換（パース）する
-    const credentials = JSON.parse(credentialsJsonString);
 
     // 4. Vertex AIクライアントを初期化する
     const clientOptions = {

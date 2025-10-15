@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "engines": {
-    "node": "20.x"
+    "node": "18.x"
   },
   "dependencies": {
     "@google-cloud/aiplatform": "^5.8.0",
@@ -17,6 +17,7 @@
     "@line/liff": "^2.27.2",
     "@t3-oss/env-nextjs": "^0.13.8",
     "axios": "^1.12.2",
+    "google-auth-library": "^10.4.0",
     "googleapis": "^162.0.0",
     "imagekit": "^6.0.0",
     "imagekit-javascript": "^4.0.1",

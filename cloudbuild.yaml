@@ -1,11 +1,27 @@
 steps:
+# ステップ1: Dockerイメージをビルドする
+# Dockerfileを元に、'aikaapp'という名前のコンテナイメージを作成します。
 - name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/aikaapp:latest', '.']
+
+# ステップ2: ビルドしたイメージをContainer Registryにプッシュ（保存）する
+# Cloud Runが使えるように、ビルドしたイメージをGoogleのレジストリに保存します。
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/aikaapp:latest']
+
+# ステップ3: イメージをCloud Runにデプロイする
+# 保存したイメージを使って、'aikaapp'サービスを更新します。
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'gcloud'
   args:
-  - 'build'
-  - '-t'
-  - 'gcr.io/innate-algebra-474710-f0/aikaapp-main:$COMMIT_SHA'
-  - '.'
+    - 'run'
+    - 'deploy'
+    - 'aikaapp'  # あなたのサービス名
+    - '--image=gcr.io/$PROJECT_ID/aikaapp:latest'
+    - '--region=europe-west1'  # スクリーンショットから特定したリージョン
+    - '--platform=managed'
+    - '--allow-unauthenticated' # 誰でもアクセスできるように許可
+
+# ビルドで作成したイメージを指定
 images:
-- 'gcr.io/innate-algebra-474710-f0/aikaapp-main:$COMMIT_SHA'
-options:
-  logging: CLOUD_LOGGING_ONLY
+- 'gcr.io/$PROJECT_ID/aikaapp:latest'

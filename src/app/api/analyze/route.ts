@@ -19,7 +19,8 @@ export async function POST(req: Request) {
     };
 
     console.log("Sending request to Video Intelligence API...");
-    const [operation] = await videoClient.annotateVideo(request);
+   const result = await videoClient.annotateVideo(request);
+const operation = result[0];
     console.log("Waiting for operation to complete...");
 
     await operation.promise();

@@ -1,63 +1,38 @@
-// 対象のAPIファイル (例: src/app/api/analyze/route.ts)
+import { VideoIntelligenceServiceClient } from "@google-cloud/video-intelligence";
+import { NextResponse } from "next/server";
 
-import { PredictionServiceClient } from '@google-cloud/aiplatform';
+// Video Intelligence APIのクライアントを初期化します
+const videoClient = new VideoIntelligenceServiceClient();
 
 export async function POST(req: Request) {
   try {
-    // --- ▼▼▼【最終版】認証コード ▼▼▼ ---
+    // ここは一旦、動画解析が動くかどうかのテスト用です
+    console.log("Video analysis request received.");
 
-    // 1. 環境変数（中身はBase64）を読み込む
-    const credentialsBase64 = process.env.GOOGLE_CREDENTIALS_JSON;
+    // 今はダミーの処理をしています
+    // 将来的には、ここでリクエストから動画ファイルの情報を受け取ります
+    const gcsUri = "gs://YOUR_BUCKET_NAME/YOUR_VIDEO_FILE.mp4";
 
-    if (!credentialsBase64) {
-      // 環境変数が存在しない場合のエラー
-      console.error('致命的エラー: GOOGLE_CREDENTIALS_JSON 環境変数が定義されていません。');
-      return new Response(JSON.stringify({
-        error: "サーバー設定エラー: 認証情報が設定されていません。"
-      }), { 
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    // 2. Base64文字列を、元のJSON文字列にデコード（復元）する
-    const credentialsJsonString = Buffer.from(credentialsBase64, 'base64').toString('utf8');
-    
-    // 3. デコードしたJSON文字列を、JavaScriptオブジェクトに変換（パース）する
-    const credentials = JSON.parse(credentialsJsonString);
-
-    // 4. Vertex AIクライアントを初期化する
-    const clientOptions = {
-      apiEndpoint: 'asia-northeast1-aiplatform.googleapis.com',
-      credentials,
+    const request = {
+      inputUri: gcsUri,
+      features: ["OBJECT_TRACKING"], // 例としてオブジェクト追跡機能を指定
     };
-    const predictionServiceClient = new PredictionServiceClient(clientOptions);
-    
-    // --- ▲▲▲ 認証コードここまで ▲▲▲ ---
 
+    console.log("Sending request to Video Intelligence API...");
+    const [operation] = await videoClient.annotateVideo(request);
+    console.log("Waiting for operation to complete...");
 
-    // --- これ以降に、あなたのAI分析処理を記述します ---
-    // 例: const body = await req.json();
-    // 例: const [response] = await predictionServiceClient.predict(...);
-    
+    await operation.promise();
 
-    // 処理が成功した場合、クライアントに結果を返す
-    return new Response(JSON.stringify({
-      message: "分析に成功しました。",
-    }), { 
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
+    console.log("Video analysis successful.");
+    return NextResponse.json({
+      message: "動画解析が正常に開始されました。",
     });
-
   } catch (error) {
-    // 予期せぬエラーを処理する
-    console.error('予期せぬエラーが発生しました:', error);
-    return new Response(JSON.stringify({
-      error: "サーバー内部で予期せぬエラーが発生しました。",
-      details: error instanceof Error ? error.message : "不明なエラー",
-    }), { 
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.error("ERROR IN VIDEO ANALYSIS:", error);
+    return NextResponse.json(
+      { message: "動画解析中にエラーが発生しました。" },
+      { status: 500 }
+    );
   }
 }

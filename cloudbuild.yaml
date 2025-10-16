@@ -1,0 +1,9 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+  - 'build'
+  - '-t'
+  - 'gcr.io/innate-algebra-474710-f0/aikaapp-main:$SHORT_SHA'
+  - '.'
+images:
+- 'gcr.io/innate-algebra-474710-f0/aikaapp-main:$SHORT_SHA'

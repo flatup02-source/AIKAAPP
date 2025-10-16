@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 # 3. 依存関係を効率的にインストール
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 
 # 4. ソースコードをコピーしてビルド
 COPY . .

@@ -32,6 +32,7 @@ COPY --from=base /app/package.json ./package.json
 USER nextjs
 
 # 9. Cloud Run 用にポートを 8080 に設定
+ENV PORT 8080
 EXPOSE 8080
 
 # 10. 起動コマンド

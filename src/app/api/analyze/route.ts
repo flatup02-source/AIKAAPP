@@ -14,7 +14,6 @@ export async function POST(req: Request) {
 
     const request = {
       inputUri: gcsUri,
-      // ↓↓↓ この行を正式な命令書の形式に修正しました ↓↓↓
       features: [protos.google.cloud.videointelligence.v1.Feature.OBJECT_TRACKING],
     };
 

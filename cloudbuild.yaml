@@ -3,7 +3,9 @@ steps:
   args:
   - 'build'
   - '-t'
-  - 'gcr.io/innate-algebra-474710-f0/aikaapp-main:$SHORT_SHA'
+  - 'gcr.io/innate-algebra-474710-f0/aikaapp-main:$COMMIT_SHA'
   - '.'
 images:
-- 'gcr.io/innate-algebra-474710-f0/aikaapp-main:$SHORT_SHA'
+- 'gcr.io/innate-algebra-474710-f0/aikaapp-main:$COMMIT_SHA'
+options:
+  logging: CLOUD_LOGGING_ONLY

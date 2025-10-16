@@ -1,21 +1,38 @@
-FROM node:20-alpine
+# 1. ビルド環境のベースイメージを指定
+FROM node:20-slim AS base
 
-# 作業フォルダ
+# 2. ビルドに必要なツールをインストールし、キャッシュをクリーン
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
+# 3. 依存関係を効率的にインストール
 WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
 
-# 依存関係のみ先にコピーしてインストール（ビルドキャッシュ活用）
-COPY package*.json ./
-RUN npm ci && npm cache clean --force
-
-# アプリ本体をコピー
+# 4. ソースコードをコピーしてビルド
 COPY . .
-
-# 本番ビルド
 RUN npm run build
 
-# Cloud Run は 8080 を使う
-ENV PORT=8080
+# 5. 本番環境のベースイメージを指定
+FROM node:20-slim AS release
+
+# 6. 実行ユーザーを作成（セキュリティ向上）
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# 7. 実行に必要なファイルのみをコピー
+WORKDIR /app
+COPY --from=base /app/public ./public
+COPY --from=base /app/.next ./.next
+COPY --from=base /app/node_modules ./node_modules
+COPY --from=base /app/package.json ./package.json
+
+
+# 8. ユーザーを切り替え
+USER nextjs
+
+# 9. Cloud Run 用にポートを 8080 に設定
 EXPOSE 8080
 
-# Next.js を 8080 で起動
-CMD ["npm", "run", "start"]
+# 10. 起動コマンド
+CMD ["npm", "start"]

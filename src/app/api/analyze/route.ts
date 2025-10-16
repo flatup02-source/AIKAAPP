@@ -1,26 +1,26 @@
-import { VideoIntelligenceServiceClient } from "@google-cloud/video-intelligence";
+import {
+  VideoIntelligenceServiceClient,
+  protos,
+} from "@google-cloud/video-intelligence";
 import { NextResponse } from "next/server";
 
-// Video Intelligence APIのクライアントを初期化します
 const videoClient = new VideoIntelligenceServiceClient();
 
 export async function POST(req: Request) {
   try {
-    // ここは一旦、動画解析が動くかどうかのテスト用です
     console.log("Video analysis request received.");
 
-    // 今はダミーの処理をしています
-    // 将来的には、ここでリクエストから動画ファイルの情報を受け取ります
     const gcsUri = "gs://YOUR_BUCKET_NAME/YOUR_VIDEO_FILE.mp4";
 
     const request = {
       inputUri: gcsUri,
-      features: ["OBJECT_TRACKING"], // 例としてオブジェクト追跡機能を指定
+      // ↓↓↓ この行を正式な命令書の形式に修正しました ↓↓↓
+      features: [protos.google.cloud.videointelligence.v1.Feature.OBJECT_TRACKING],
     };
 
     console.log("Sending request to Video Intelligence API...");
-   const result = await videoClient.annotateVideo(request);
-const operation = result[0];
+    const result = await videoClient.annotateVideo(request);
+    const operation = result[0];
     console.log("Waiting for operation to complete...");
 
     await operation.promise();

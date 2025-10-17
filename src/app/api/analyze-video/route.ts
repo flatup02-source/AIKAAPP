@@ -1,89 +1,55 @@
-import { NextRequest, NextResponse } from "next/server";
-import { VertexAI } from "@google-cloud/vertexai";
-import axios from "axios";
+import {
+  VideoIntelligenceServiceClient,
+  protos,
+} from "@google-cloud/video-intelligence";
+import { NextResponse } from "next/server";
 
-// Gemini Visionの初期化
-const vertex_ai = new VertexAI({
-  project: process.env.GOOGLE_PROJECT_ID!,
-  location: "asia-northeast1", // 東京リージョン
+// 環境変数からプロジェクトIDを取得するか、直接ここにハードコードする（非推奨）
+// 本番環境では環境変数を使用するのがベストプラクティスです。
+const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || "YOUR_GOOGLE_CLOUD_PROJECT_ID_NEEDS_TO_BE_SET";
+// 注意: "YOUR_GOOGLE_CLOUD_PROJECT_ID_NEEDS_TO_BE_SET" は実際のプロジェクトIDに置き換えてください。
+// 例: "my-project-12345"
+
+const videoClient = new VideoIntelligenceServiceClient({
+  projectId: projectId, // ここでプロジェクトIDを渡す
 });
-const model = "gemini-1.0-pro-vision-001";
 
-const generativeModel = vertex_ai.getGenerativeModel({
-  model: model,
-});
-
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { videoUrl, idolFighterName, liffUserId } = body;
+    console.log("Video analysis request received.");
 
-    if (!videoUrl) {
-      return NextResponse.json({ error: "動画URLが必要です" }, { status: 400 });
+    // フロントエンドから送られてきた情報（JSON）を読み取る
+    const { gcsUri } = await req.json();
+
+    // gcsUriが送られてこなかった場合のエラー処理
+    if (!gcsUri) {
+      return NextResponse.json(
+        { message: "gcsUri is required." },
+        { status: 400 }
+      );
     }
 
-    // ★ STEP 1: Gemini Visionが動画を「観て」テキスト化する ★
     const request = {
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              fileData: {
-                mimeType: "video/mp4", // もし他の形式も許可するなら要調整
-                fileUri: videoUrl,
-              },
-            },
-            {
-              text: "この格闘技のフォーム動画を詳細に分析し、動きの良い点と改善点を箇条書きで客観的に説明してください。",
-            },
-          ],
-        },
-      ],
+      inputUri: gcsUri,
+      features: [protos.google.cloud.videointelligence.v1.Feature.OBJECT_TRACKING],
     };
 
-    const response = await generativeModel.generateContent(request);
-    const videoAnalysisText =
-      response.response.candidates?.[0]?.content?.parts[0]?.text ||
-      "動画の分析に失敗しました。";
+    console.log("Sending request to Video Intelligence API...");
+    const result = await videoClient.annotateVideo(request);
+    const operation = result[0];
+    console.log("Waiting for operation to complete...");
 
-    // ★ STEP 2: Dify (AIKA 18号) がテキストを「思考」し、最終的な神託を生成する ★
-    const difyResponse = await axios.post(
-      process.env.DIFY_API_URL!, // DifyのAPI URL
-      {
-        inputs: {
-          video_analysis_text: videoAnalysisText,
-          idol_fighter_name: idolFighterName || "指定なし",
-        },
-        response_mode: "blocking", // 回答が完了するまで待つ
-        user: liffUserId || "anonymous-user",
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.DIFY_API_KEY!}`, // DifyのAPIキー
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    // Difyからの回答は通常、JSON形式の"文字列"で返ってくる
-    const aikasOracle = JSON.parse(difyResponse.data.answer);
-
-    // ★ STEP 3: 最終結果をフロントエンドに返す ★
-    return NextResponse.json(aikasOracle);
+    // ここでは処理の完了を待たずに、リクエストを受け付けたことをすぐに返す
+    // 実際の分析結果は別の方法で取得します（今後のステップ）
+    console.log("Video analysis operation started.");
+    return NextResponse.json({
+      message: "動画解析のリクエストを受け付けました。",
+    });
 
   } catch (error) {
-    console.error("分析APIエラー:", error);
-    // エラーの詳細をフロントに返す
-    let errorMessage = "不明なエラー";
-    if (axios.isAxiosError(error)) {
-      errorMessage = JSON.stringify(error.response?.data) || error.message;
-    } else if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-    
+    console.error("ERROR IN VIDEO ANALYSIS:", error);
     return NextResponse.json(
-      { error: "分析中にエラーが発生しました", details: errorMessage },
+      { message: "動画解析中にエラーが発生しました。" },
       { status: 500 }
     );
   }

@@ -1,19 +1,54 @@
 steps:
+# ステップ1: Dockerイメージをビルドします
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'gcr.io/$PROJECT_ID/aikaapp:latest', '.']
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/$PROJECT_ID/aikaapp:latest']
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  entrypoint: 'gcloud'
+  id: 'Build Image'
   args:
-    - 'run'
-    - 'deploy'
-    - 'aikaapp'
-    - '--image=gcr.io/$PROJECT_ID/aikaapp:latest'
-    - '--region=europe-west1'
-    - '--platform=managed'
-    - '--allow-unauthenticated'
+  - 'build'
+  - '-t'
+  - 'gcr.io/$PROJECT_ID/aikaapp:latest' # 明示的に :latest タグを追加
+  - '.'
+  # すべての環境変数を --build-arg として直接渡します
+  # これらの値は gcloud builds submit コマンドで --substitutions として提供されます
+  - '--build-arg'
+  - 'LINE_CHANNEL_ID=${_LINE_CHANNEL_ID}'
+  - '--build-arg'
+  - 'IMAGEKIT_PRIVATE_KEY=${_IMAGEKIT_PRIVATE_KEY}'
+  - '--build-arg'
+  - 'GOOGLE_CREDENTIALS_JSON=${_GOOGLE_CREDENTIALS_JSON}'
+  - '--build-arg'
+  - 'NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY=${_NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY}'
+  - '--build-arg'
+  - 'NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT=${_NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT}'
+  - '--build-arg'
+  - 'NEXT_PUBLIC_GOOGLE_SHEET_ID=${_NEXT_PUBLIC_GOOGLE_SHEET_ID}'
+
+# ステップ2: ビルドされたDockerイメージをContainer Registryにプッシュします
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'Push Image'
+  args: ['push', 'gcr.io/$PROJECT_ID/aikaapp:latest']
+
+# 必要であれば、Cloud Runへのデプロイステップを追加
+# - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+#   id: 'Deploy to Cloud Run'
+#   entrypoint: 'gcloud'
+#   args:
+#   - 'run'
+#   - 'deploy'
+#   - 'aikaapp'
+#   - '--image=gcr.io/$PROJECT_ID/aikaapp:latest'
+#   - '--region=europe-west1' # 適切なリージョンに置き換えてください
+#   - '--platform=managed'
+#   - '--allow-unauthenticated'
+
 images:
 - 'gcr.io/$PROJECT_ID/aikaapp:latest'
-options:
-  logging: CLOUD_LOGGING_ONLY
+
+# Cloud Buildの置換変数 (サブスティテューション) のデフォルト値を設定できます。
+# ただし、通常はgcloud builds submitコマンドでオーバーライドします。
+# substitutions:
+#   _LINE_CHANNEL_ID: 'default-line-channel-id'
+#   _IMAGEKIT_PRIVATE_KEY: 'default-imagekit-private-key'
+#   _GOOGLE_CREDENTIALS_JSON: 'default-google-credentials-json'
+#   _NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY: 'default-public-key'
+#   _NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT: 'default-url-endpoint'
+#   _NEXT_PUBLIC_GOOGLE_SHEET_ID: 'default-google-sheet-id'

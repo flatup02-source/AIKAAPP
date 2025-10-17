@@ -1,21 +1,42 @@
-# ステージ1: ビルド環境
-# ↓↓↓ この行を修正 ↓↓↓
+# ステージ1: ビルダー
 FROM node:20-alpine AS builder
+
 WORKDIR /app
+
+# キャッシュを改善するために、package.json をコピーして最初に依存関係をインストールします
 COPY package*.json ./
 RUN npm install
+
+# すべての環境変数に対してビルド引数を宣言します
+# これらは cloudbuild.yaml の --build-arg で使用されている名前と一致している必要があります
+ARG LINE_CHANNEL_ID
+ARG IMAGEKIT_PRIVATE_KEY
+ARG GOOGLE_CREDENTIALS_JSON
+ARG NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY
+ARG NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT
+ARG NEXT_PUBLIC_GOOGLE_SHEET_ID
+
+# それらをDockerイメージのコンテキスト内で環境変数として設定します。
+# Next.jsビルド (および実行中のアプリ) は、これらをENV変数として探します。
+ENV LINE_CHANNEL_ID=$LINE_CHANNEL_ID \
+    IMAGEKIT_PRIVATE_KEY=$IMAGEKIT_PRIVATE_KEY \
+    GOOGLE_CREDENTIALS_JSON=$GOOGLE_CREDENTIALS_JSON \
+    NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY=$NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY \
+    NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT=$NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT \
+    NEXT_PUBLIC_GOOGLE_SHEET_ID=$NEXT_PUBLIC_GOOGLE_SHEET_ID
+
+# アプリケーションの残りのコードをコピーします
 COPY . .
+
+# Next.jsのビルドコマンドを実行します
 RUN npm run build
 
-# ステージ2: 本番環境
-# ↓↓↓ この行を修正 ↓↓↓
-FROM node:20-alpine AS runner
-WORKDIR /app
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-
-EXPOSE 3000
-ENV PORT 3000
-
-CMD ["node", "server.js"]
+# ステージ2: 本番 (例、もし本番ステージがある場合)
+# FROM node:20-alpine AS runner
+# WORKDIR /app
+# ENV NODE_ENV production
+# COPY --from=builder /app/.next ./.next
+# COPY --from=builder /app/node_modules ./node_modules
+# COPY --from=builder /app/package.json ./package.json
+# EXPOSE 3000
+# CMD ["npm", "start"]

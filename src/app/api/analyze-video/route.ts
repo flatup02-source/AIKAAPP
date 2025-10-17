@@ -4,14 +4,8 @@ import {
 } from "@google-cloud/video-intelligence";
 import { NextResponse } from "next/server";
 
-// 環境変数からプロジェクトIDを取得するか、直接ここにハードコードする（非推奨）
-// 本番環境では環境変数を使用するのがベストプラクティスです。
-const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || "YOUR_GOOGLE_CLOUD_PROJECT_ID_NEEDS_TO_BE_SET";
-// 注意: "YOUR_GOOGLE_CLOUD_PROJECT_ID_NEEDS_TO_BE_SET" は実際のプロジェクトIDに置き換えてください。
-// 例: "my-project-12345"
-
 const videoClient = new VideoIntelligenceServiceClient({
-  projectId: projectId, // ここでプロジェクトIDを渡す
+  projectId: process.env.GOOGLE_PROJECT_ID,
 });
 
 export async function POST(req: Request) {

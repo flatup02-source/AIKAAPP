@@ -1,6 +1,14 @@
-logsBucket: gs://gym1
+logsBucket: gs://aika-storage-bucket
 
 steps:
+# Step to fetch GOOGLE_CREDENTIALS_JSON from Secret Manager
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: 'Fetch Secret'
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - 'gcloud secrets versions access latest --secret=GOOGLE_CREDENTIALS_JSON --format="get(payload.data)" | base64 -d > /workspace/google-credentials.json'
+
 # ステップ1: Dockerイメージをビルドします
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build Image'
@@ -16,7 +24,7 @@ steps:
   - '--build-arg'
   - 'IMAGEKIT_PRIVATE_KEY=${_IMAGEKIT_PRIVATE_KEY}'
   - '--build-arg'
-  - 'GOOGLE_CREDENTIALS_JSON=$(cat service-account-key.json)'
+  - 'GOOGLE_CREDENTIALS_JSON=$(cat /workspace/google-credentials.json)' # Use the fetched secret
   - '--build-arg'
   - 'NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY=${_NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY}'
   - '--build-arg'

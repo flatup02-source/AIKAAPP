@@ -1,3 +1,5 @@
+logsBucket: gs://gym1
+
 steps:
 # ステップ1: Dockerイメージをビルドします
 - name: 'gcr.io/cloud-builders/docker'
@@ -14,7 +16,7 @@ steps:
   - '--build-arg'
   - 'IMAGEKIT_PRIVATE_KEY=${_IMAGEKIT_PRIVATE_KEY}'
   - '--build-arg'
-  - 'GOOGLE_CREDENTIALS_JSON=${_GOOGLE_CREDENTIALS_JSON}'
+  - 'GOOGLE_CREDENTIALS_JSON=$(cat service-account-key.json)'
   - '--build-arg'
   - 'NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY=${_NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY}'
   - '--build-arg'

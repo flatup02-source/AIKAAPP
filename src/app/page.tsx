@@ -3,7 +3,8 @@
 import { useState, ChangeEvent, useEffect } from "react";
 import Image from "next/image";
 import axios from "axios";
-import { getStorage, ref, uploadBytes } from "firebase/storage";
+import { ref, uploadBytes } from "firebase/storage";
+import { storage } from "../../lib/firebase";
 
 import liff from "@line/liff";
 
@@ -85,7 +86,6 @@ export default function AikaFormPage() {
       }
 
       // GCSへの直接アップロード処理
-      const storage = getStorage();
       const bucketName = "aika-storage-bucket2";
       const fileName = `${Date.now()}_${file.name}`;
       const storageRef = ref(storage, `videos/${fileName}`);
@@ -273,43 +273,54 @@ export default function AikaFormPage() {
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2">私に、君の「のびしろ」を見せてくれ。</label>
               <p className="text-sm text-gray-600 mb-2">完成されたフォームには興味ない。今の君の動きに眠る、未来の強さの原石を私が見つけ出す。安心して、今の全てをぶつけてみてくれ。（10秒以内の動画をどうぞ）</p>
-              <label htmlFor="file-upload" className={`mt-2 flex justify-center items-center w-full px-6 py-10 border-2 border-dashed rounded-xl cursor-pointer transition-colors duration-300 ${file ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-blue-400'}`}>
-                <div className="text-center">
-                  {file ? (
-                    <div>
-                      <svg className="mx-auto h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      <p className="mt-2 font-semibold text-green-600">{file.name}</p>
-                      <p className="text-xs text-gray-500 mt-1">ファイル選択済み！</p>
-                    </div>
-                  ) : (
-                    <div>
-                      <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 4v.01M28 8l4-4h20v12l-4 4m-32 4l8-8 12 12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                      <p className="mt-2 text-sm text-gray-600">動画を選択</p>
-                    </div>
-                  )}
-                  <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept="video/*"/>
-                </div>
-              </label>
-            </div>
-            <div className="pt-6">
-              <button onClick={handleUpload} disabled={uploading || !file} className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg text-lg font-bold text-white bg-gradient-to-r from-blue-500 to-teal-400 hover:from-blue-600 hover:to-teal-500 disabled:bg-gray-400 disabled:from-gray-400 disabled:cursor-not-allowed transform hover:scale-105 transition-transform duration-200">
-                {uploading ? `解析中... ${uploadProgress}%` : "18号、頼んだ！"}
-              </button>
+{/* ===== アップロードUI ここから ===== */}
+<div className="w-full max-w-md mx-auto p-4 bg-slate-100 rounded-2xl shadow-inner space-y-4">
+
+  {/* ファイルが選択されている場合にファイル名を表示 */}
+  {file && (
+    <div className="p-3 bg-white rounded-lg text-center">
+      <p className="text-gray-800 font-medium truncate">{file.name}</p>
+    </div>
+  )}
+
+  {/* メインの実行ボタン */}
+  <button
+    onClick={handleUpload}
+    disabled={!file || uploading}
+    className="w-full bg-black text-white font-bold py-4 px-6 rounded-xl text-lg transition-all
+               hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed"
+  >
+    18号、頼んだ！
+  </button>
+
+  {/* ファイル選択ボタン */}
+  <label className="block w-full text-center text-sm text-gray-600 bg-white
+                   py-2 px-4 rounded-xl cursor-pointer hover:bg-gray-200 transition-colors">
+    {file ? '動画を変更する' : '動画を選択する'}
+    <input
+      type="file"
+      accept="video/*"
+      className="hidden"
+      onChange={handleFileChange}
+    />
+  </label>
+</div>
+{/* ===== アップロードUI ここまで ===== */}
             </div>
           </div>
         </main>
-        <footer className="text-left text-sm text-gray-600 bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-white/50">
+        <footer className="text-left text-sm bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-white/50">
           <h3 className="font-bold text-base text-gray-800 mb-3">直接の指導をご希望の方へ</h3>
-          <p className="mb-4">もし操作にご不明な点があったり、AIの解析だけでは物足りないと感じたりした際は、どうぞお気軽にジムへお越しください。</p>
+          <p className="mb-4 text-gray-800 leading-relaxed">もし操作にご不明な点があったり、AIの解析だけでは物足りないと感じたりした際は、どうぞお気軽にジムへお越しください。</p>
           
           <div className="mb-4">
               <h4 className="font-semibold text-gray-700">【初めての方へ】</h4>
-              <p>インストラクターがマンツーマンで指導する無料体験レッスンもご用意しております。あなたの理想のフォームへ、最短距離で近づきましょう。</p>
+              <p className="text-gray-800 leading-relaxed">インストラクターがマンツーマンで指導する無料体験レッスンもご用意しております。あなたの理想のフォームへ、最短距離で近づきましょう。</p>
           </div>
 
           <div>
               <h4 className="font-semibold text-gray-700">【会員の皆様へ】</h4>
-              <p>ジムにてインストラクターへ直接お声がけくだされば、よりパーソナルなアドバイスも可能です。いつでもお待ちしております。</p>
+              <p className="text-gray-800 leading-relaxed">ジムにてインストラクターへ直接お声がけくだされば、よりパーソナルなアドバイスも可能です。いつでもお待ちしております。</p>
           </div>
         </footer>
       </div>

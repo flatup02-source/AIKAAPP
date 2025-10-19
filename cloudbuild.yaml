@@ -22,6 +22,8 @@ steps:
     - 'NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT=$$NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT'
     - '--build-arg'
     - 'VertexAIAPI=$$VertexAIAPI'
+    - '--build-arg'
+    - 'STORAGE_BUCKET=$$STORAGE_BUCKET_VALUE'
     - '-t'
     - 'gcr.io/innate-algebra-474710-f0/aikaapp:latest'
     - '.'
@@ -34,6 +36,7 @@ steps:
     - 'NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY'
     - 'NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT'
     - 'VertexAIAPI'
+    - 'STORAGE_BUCKET_VALUE'
 
 # ==============================================================================
 # ステップ2: ビルドされたDockerイメージをContainer Registryにプッシュ
@@ -79,6 +82,8 @@ steps:
     - 'NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT=NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT:latest'
     - '--set-secrets'
     - 'VertexAIAPI=VertexAIAPI:latest'
+    - '--set-secrets'
+    - 'STORAGE_BUCKET=FIREBASE_STORAGE_BUCKET_SECRET:latest'
   waitFor: ['Push Image']
 
 availableSecrets:
@@ -99,6 +104,8 @@ availableSecrets:
     env: 'NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT'
   - versionName: projects/innate-algebra-474710-f0/secrets/VertexAIAPI/versions/latest
     env: 'VertexAIAPI'
+  - versionName: projects/YOUR_PROJECT_ID/secrets/FIREBASE_STORAGE_BUCKET_SECRET/versions/latest
+    env: 'STORAGE_BUCKET_VALUE'
 
 options:
   logging: CLOUD_LOGGING_ONLY

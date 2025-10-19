@@ -18,6 +18,7 @@
     "@line/liff": "^2.27.2",
     "@t3-oss/env-nextjs": "^0.13.8",
     "axios": "^1.12.2",
+    "firebase": "^12.4.0",
     "google-auth-library": "^10.4.0",
     "googleapis": "^162.0.0",
     "imagekit": "^6.0.0",

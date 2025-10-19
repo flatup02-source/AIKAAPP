@@ -104,7 +104,7 @@ availableSecrets:
     env: 'NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT'
   - versionName: projects/innate-algebra-474710-f0/secrets/VertexAIAPI/versions/latest
     env: 'VertexAIAPI'
-  - versionName: projects/YOUR_PROJECT_ID/secrets/FIREBASE_STORAGE_BUCKET_SECRET/versions/latest
+  - versionName: projects/aika-202510/secrets/FIREBASE_STORAGE_BUCKET_SECRET/versions/latest
     env: 'STORAGE_BUCKET_VALUE'
 
 options:

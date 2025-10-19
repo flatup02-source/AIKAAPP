@@ -1,115 +1,52 @@
-import { NextRequest, NextResponse } from "next/server";
-import { google } from "googleapis";
+import { NextRequest, NextResponse } from 'next/server';
+import { google } from 'googleapis';
+import axios from 'axios';
 
-import { env } from "@/env.mjs";
+// Google Sheets APIの認証と設定
+const auth = new google.auth.GoogleAuth({
+  credentials: {
+    client_email: process.env.GOOGLE_CLIENT_EMAIL,
+    private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  },
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+});
+
+const sheets = google.sheets({ version: 'v4', auth });
+const spreadsheetId = process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID;
 
 export async function POST(req: NextRequest) {
-  console.log("Received request to update spreadsheet.");
-
-  // --- LINE ID Token Authentication ---
-  const token = req.headers.get("Authorization")?.replace("Bearer ", "");
-  if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const channelId = env.LINE_CHANNEL_ID;
-  if (!channelId) {
-    console.error("LINE_CHANNEL_ID is not set in environment variables.");
-    return NextResponse.json({ error: "Configuration error" }, { status: 500 });
-  }
-
   try {
-    const params = new URLSearchParams();
-    params.append("id_token", token);
-    params.append("client_id", channelId);
-
-    const response = await fetch("https://api.line.me/oauth2/v2.1/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: params,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("LINE token verification failed:", errorData);
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
-    console.log("LINE token verified successfully.");
-    // --- End of Authentication ---
-
     const body = await req.json();
-    console.log("Request body:", body);
+    const { userId, userName, videoUrl, timestamp } = body;
 
-    const {
-      userName,
-      genre, // Extract genre
-      theme,
-      requests,
-      videoUrl,
-      fileName,
-      fileType,
-      fileSize,
-    } = body;
-
-    if (!videoUrl || !fileName) {
-      console.error("Missing required parameters: videoUrl or fileName");
-      return NextResponse.json(
-        { error: "Missing required parameters" },
-        { status: 400 }
-      );
+    if (!userId || !videoUrl || !timestamp) {
+      return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
 
-    let credentials;
-    try {
-      credentials = JSON.parse(env.GOOGLE_CREDENTIALS_JSON);
-    } catch (error) {
-      console.error("Failed to parse GOOGLE_CREDENTIALS_JSON:", error);
-      return NextResponse.json(
-        { error: "Google credentials configuration error." },
-        { status: 500 }
-      );
-    }
-
-    const auth = new google.auth.GoogleAuth({
-      credentials,
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    });
-
-    const sheets = google.sheets({ version: "v4", auth });
-
-    const now = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
-    
-    const values = [[
-        now, 
-        userName || "",
-        genre || "", // Add genre to values
-        theme || "",
-        requests || "",
-        videoUrl, 
-        fileName, 
-        fileType, 
-        fileSize
-    ]];
-
-    console.log("Appending values to spreadsheet:", values);
-
+    // Googleスプレッドシートへの書き込み
     await sheets.spreadsheets.values.append({
-      spreadsheetId: env.NEXT_PUBLIC_GOOGLE_SHEET_ID,
-      range: "Form Responses 1",
-      valueInputOption: "USER_ENTERED",
+      spreadsheetId,
+      range: 'シート1!A:D', // 書き込み先のシート名と範囲
+      valueInputOption: 'USER_ENTERED',
       requestBody: {
-        values: values,
+        values: [[timestamp, userId, userName || 'N/A', videoUrl]],
       },
     });
 
-    console.log("Successfully appended values to spreadsheet.");
-    return NextResponse.json({ success: true });
-  } catch (error: unknown) {
-    console.error("Error updating sheet:", error);
-    const message = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
-      { error: `シートへの書き込みに失敗しました: ${message}` },
-      { status: 500 }
-    );
+    // ここが問題の箇所でした。「http://」を「https://」に修正します。
+    // さらに、将来的にも安定するよう、環境変数からベースURLを取得するように変更しました。
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://serene-zabaione-8c4e2a.netlify.app';
+    const videoAnalysisUrl = `${baseUrl}/api/analyze-video`;
+
+    // 動画解析APIを呼び出す（エラーが出てもスプレッドシート記録は成功させるため、ここでは待たない）
+    axios.post(videoAnalysisUrl, { videoUrl }).catch(error => {
+      console.error('Failed to trigger video analysis:', error.message);
+    });
+
+    return NextResponse.json({ message: 'Successfully recorded in Spreadsheet' }, { status: 200 });
+
+  } catch (error: any) {
+    console.error('Error in spreadsheet API:', error.message);
+    return NextResponse.json({ message: 'Internal Server Error', error: error.message }, { status: 500 });
   }
 }

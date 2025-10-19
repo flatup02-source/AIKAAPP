@@ -3,6 +3,7 @@
 import { useState, ChangeEvent, useEffect } from "react";
 import Image from "next/image";
 import axios from "axios";
+import { getStorage, ref, uploadBytes } from "firebase/storage";
 
 import liff from "@line/liff";
 
@@ -66,7 +67,6 @@ export default function AikaFormPage() {
     }
   };
 
-  // ★★★ これが最終形態のアップロード処理だ！ ★★★
   const handleUpload = async () => {
     if (!file) {
       alert("まず動画ファイルを選択してください。");
@@ -77,65 +77,51 @@ export default function AikaFormPage() {
     setViewState("analyzing"); // 解析中の画面に切り替え
 
     try {
-      // 1. ImageKitに動画をアップロード
-      const idToken = liff.getIDToken();
-      if (!idToken) {
+      const liffUserId = liff.getIDToken();
+      if (!liffUserId) {
         alert("LINEの認証情報を取得できませんでした。再度お試しください。");
         setViewState("form");
         return;
       }
-      const signatureResponse = await axios.get("/api/imagekit-sign", {
-        headers: {
-          'Authorization': `Bearer ${idToken}`
-        }
-      });
-      const { signature, expire, token } = signatureResponse.data;
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("publicKey", process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!);
-      formData.append("signature", signature);
-      formData.append("expire", expire);
-      formData.append("token", token);
-      formData.append("fileName", file.name);
 
-      const imagekitResponse = await axios.post(
-        "https://upload.imagekit.io/api/v1/files/upload",
-        formData,
-        {
-          onUploadProgress: (progressEvent) => {
-            if(progressEvent.total) {
-                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                setUploadProgress(percentCompleted);
-            }
-          },
-        }
-      );
-      const videoUrl = imagekitResponse.data.url;
+      // GCSへの直接アップロード処理
+      const storage = getStorage();
+      const bucketName = "aika-storage-bucket2";
+      const fileName = `${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, `videos/${fileName}`);
 
-      // 2. 新しい神経回路(/api/analyze-video)に分析を依頼！
+      // 1. GCSにファイルを直接アップロード
+      await uploadBytes(storageRef, file);
+      console.log("GCSへのアップロードが完了しました。");
+      setUploadProgress(100); // GCS upload doesn't have progress, so set to 100 after completion
+
+      // 2. 正しいgcsUriを組み立てる
+      const gcsUri = `gs://${bucketName}/videos/${fileName}`;
+
+      // 3. 正しいgcsUriを使って、APIを呼び出す
       const analysisResponse = await axios.post("/api/analyze-video", {
-        videoUrl,
+        gcsUri: gcsUri,
         idolFighterName,
-        liffUserId: liff.getIDToken() ?? undefined,
-        theme: theme, // personalityを決定するためにthemeを送信
+        liffUserId: liffUserId,
+        theme: theme,
       });
 
       const { power_level, comment } = analysisResponse.data;
 
-      // 3. 全てのデータをスプレッドシートに記録
+      // 4. 全てのデータをスプレッドシートに記録
       await axios.post("/api/spreadsheet", {
         userName,
         theme,
         requests,
-        videoUrl,
-        fileName: file.name,
+        videoUrl: gcsUri, // Using gcsUri as videoUrl
+        fileName: fileName,
         fileType: file.type,
         fileSize: file.size,
-        powerLevel: power_level, // 戦闘力も記録！
-        aiComment: comment,       // コメントも記録！
+        powerLevel: power_level,
+        aiComment: comment,
       });
       
-      // 4. 結果を画面に表示する
+      // 5. 結果を画面に表示する
       setPowerLevel(power_level);
       setAiComment(comment);
       setViewState("result"); // 結果表示画面に切り替え

@@ -4,7 +4,7 @@ import { useState, ChangeEvent, useEffect } from "react";
 import Image from "next/image";
 import axios from "axios";
 import { ref, uploadBytes } from "firebase/storage";
-import { storage } from "../../lib/firebase";
+import { storage } from "@/lib/firebase";
 
 import liff from "@line/liff";
 

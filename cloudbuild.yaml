@@ -1,8 +1,6 @@
 steps:
 # ==============================================================================
 # ステップ1: Dockerイメージのビルド
-# Dockerビルド時に環境変数を渡します。
-# secretEnvで指定したシークレットが環境変数として利用可能になります。
 # ==============================================================================
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build Image'
@@ -25,7 +23,7 @@ steps:
     - '--build-arg'
     - 'VertexAIAPI=$$VertexAIAPI'
     - '-t'
-    - 'gcr.io/${_PROJECT_ID}/aikaapp:latest'
+    - 'gcr.io/$PROJECT_ID/aikaapp:latest'
     - '.'
   secretEnv:
     - 'GOOGLE_CREDENTIALS_JSON'
@@ -42,12 +40,11 @@ steps:
 # ==============================================================================
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Push Image'
-  args: ['push', 'gcr.io/${_PROJECT_ID}/aikaapp:latest']
+  args: ['push', 'gcr.io/$PROJECT_ID/aikaapp:latest']
   waitFor: ['Build Image']
 
 # ==============================================================================
 # ステップ3: DockerイメージをCloud Runにデプロイ
-# --set-secrets フラグを使用して、Cloud Runサービスにシークレットを安全にマウントします。
 # ==============================================================================
 - name: 'gcr.io/cloud-builders/gcloud'
   id: 'Deploy to Cloud Run'
@@ -56,7 +53,7 @@ steps:
     - 'deploy'
     - 'aikaapp'
     - '--image'
-    - 'gcr.io/${_PROJECT_ID}/aikaapp:latest'
+    - 'gcr.io/$PROJECT_ID/aikaapp:latest'
     - '--region'
     - 'asia-northeast1'
     - '--platform'
@@ -77,27 +74,23 @@ steps:
     - 'VertexAIAPI=VertexAIAPI:latest'
   waitFor: ['Push Image']
 
-# ==============================================================================
-# 利用可能なシークレットの定義
-# ここで定義したシークレットがビルドステップで利用可能になります。
-# ==============================================================================
 availableSecrets:
   secretManager:
-  - versionName: projects/${_PROJECT_ID}/secrets/GOOGLE_CREDENTIALS_JSON/versions/latest
+  - versionName: projects/$PROJECT_ID/secrets/GOOGLE_CREDENTIALS_JSON/versions/latest
     env: 'GOOGLE_CREDENTIALS_JSON'
-  - versionName: projects/${_PROJECT_ID}/secrets/IMAGEKIT_PRIVATE_KEY/versions/latest
+  - versionName: projects/$PROJECT_ID/secrets/IMAGEKIT_PRIVATE_KEY/versions/latest
     env: 'IMAGEKIT_PRIVATE_KEY'
-  - versionName: projects/${_PROJECT_ID}/secrets/LINE_CHANNEL_ID/versions/latest
+  - versionName: projects/$PROJECT_ID/secrets/LINE_CHANNEL_ID/versions/latest
     env: 'LINE_CHANNEL_ID'
-  - versionName: projects/${_PROJECT_ID}/secrets/LINE_CHANNEL_SECRET/versions/latest
+  - versionName: projects/$PROJECT_ID/secrets/LINE_CHANNEL_SECRET/versions/latest
     env: 'LINE_CHANNEL_SECRET'
-  - versionName: projects/${_PROJECT_ID}/secrets/NEXT_PUBLIC_GOOGLE_SHEET_ID/versions/latest
+  - versionName: projects/$PROJECT_ID/secrets/NEXT_PUBLIC_GOOGLE_SHEET_ID/versions/latest
     env: 'NEXT_PUBLIC_GOOGLE_SHEET_ID'
-  - versionName: projects/${_PROJECT_ID}/secrets/NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY/versions/latest
+  - versionName: projects/$PROJECT_ID/secrets/NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY/versions/latest
     env: 'NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY'
-  - versionName: projects/${_PROJECT_ID}/secrets/NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT/versions/latest
+  - versionName: projects/$PROJECT_ID/secrets/NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT/versions/latest
     env: 'NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT'
-  - versionName: projects/${_PROJECT_ID}/secrets/VertexAIAPI/versions/latest
+  - versionName: projects/$PROJECT_ID/secrets/VertexAIAPI/versions/latest
     env: 'VertexAIAPI'
 
 options:

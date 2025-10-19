@@ -1,34 +1,48 @@
+# Cloud Build設定ファイル
+
 steps:
-# Step to fetch GOOGLE_CREDENTIALS_JSON from Secret Manager
+# ==============================================================================
+# ステップ1: Secret ManagerからGOOGLE_CREDENTIALS_JSONを取得し、ファイルに保存
+# ==============================================================================
 - id: 'Fetch GOOGLE_CREDENTIALS_JSON Secret'
   name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   args:
     - '-c'
     - |
+      echo "Fetching GOOGLE_CREDENTIALS_JSON from Secret Manager..."
       gcloud secrets versions access latest --secret=GOOGLE_CREDENTIALS_JSON --format='get(payload.data)' | base64 -d > /workspace/google-credentials.json
       chmod 600 /workspace/google-credentials.json
+      echo "GOOGLE_CREDENTIALS_JSON saved to /workspace/google-credentials.json"
 
-# Step to fetch other environment variables from Secret Manager
+# ==============================================================================
+# ステップ2: その他の環境変数をSecret Managerから取得し、ファイルに保存
+# ==============================================================================
 - id: 'Fetch Other Secrets'
   name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   args:
     - '-c'
     - |
+      echo "Fetching other environment variables from Secret Manager..."
+      # Secret Managerに登録したすべてのシークレット名をここに正確に列挙します。
       SECRET_NAMES="IMAGEKIT_PRIVATE_KEY LINE_CHANNEL_ID LINE_CHANNEL_SECRET NEXT_PUBLIC_GOOGLE_SHEET_ID NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT VertexAIAPI"
       for SECRET_NAME in $SECRET_NAMES; do
         gcloud secrets versions access latest --secret=$$SECRET_NAME --format='get(payload.data)' | base64 -d > /workspace/$${SECRET_NAME}.txt
+        echo "Secret $${SECRET_NAME} saved to /workspace/$${SECRET_NAME}.txt"
       done
 
-# Step #0: Docker Image Build
+# ==============================================================================
+# ステップ3: Dockerイメージのビルド
+# ==============================================================================
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Build Image'
   args: ['build', '-t', 'gcr.io/${_PROJECT_ID}/aikaapp:latest', '.']
+  # Dockerビルド時の環境変数としてSecret Managerから取得した値を渡す
   env:
-    - 'GOOGLE_PROJECT_ID=innate-algebra-474710-f0'
+    - 'GOOGLE_PROJECT_ID=${_PROJECT_ID}' # Cloud Buildの組み込み変数を使用
     - 'GOOGLE_CREDENTIALS_JSON=/workspace/google-credentials.json' # ファイルパスを指定
-    # Secret Managerから取得した値をファイルから読み込む
+    # Secret Managerから取得した値をファイルから読み込む形式
     - 'IMAGEKIT_PRIVATE_KEY=$$(cat /workspace/IMAGEKIT_PRIVATE_KEY.txt)'
     - 'LINE_CHANNEL_ID=$$(cat /workspace/LINE_CHANNEL_ID.txt)'
     - 'LINE_CHANNEL_SECRET=$$(cat /workspace/LINE_CHANNEL_SECRET.txt)'
@@ -36,31 +50,39 @@ steps:
     - 'NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY=$$(cat /workspace/NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY.txt)'
     - 'NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT=$$(cat /workspace/NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT.txt)'
     - 'VertexAIAPI=$$(cat /workspace/VertexAIAPI.txt)'
+  waitFor: ['Fetch GOOGLE_CREDENTIALS_JSON Secret', 'Fetch Other Secrets'] # シークレット取得ステップが完了するのを待つ
 
-# ステップ2: ビルドされたDockerイメージをContainer Registryにプッシュします
+# ==============================================================================
+# ステップ4: ビルドされたDockerイメージをContainer Registryにプッシュ
+# ==============================================================================
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Push Image'
   args: ['push', 'gcr.io/${_PROJECT_ID}/aikaapp:latest']
+  waitFor: ['Build Image']
 
-# ステップ3: DockerイメージをCloud Runにデプロイします
+# ==============================================================================
+# ステップ5: DockerイメージをCloud Runにデプロイ
+# ==============================================================================
 - name: 'gcr.io/cloud-builders/gcloud'
   id: 'Deploy to Cloud Run'
   args:
     - 'run'
     - 'deploy'
-    - 'aikaapp' # サービス名を指定
+    - 'aikaapp' # ★ サービス名を指定（必要に応じて変更）
     - '--image'
     - 'gcr.io/${_PROJECT_ID}/aikaapp:latest'
     - '--region'
-    - 'asia-northeast1' # リージョンを指定（必要に応じて変更）
+    - 'asia-northeast1' # ★ リージョンを指定（必要に応じて変更）
     - '--platform'
     - 'managed'
-    - '--allow-unauthenticated' # 認証なしでのアクセスを許可（必要に応じて変更）
+    - '--allow-unauthenticated' # ★ 認証なしでのアクセスを許可（必要に応じて変更）
     - '--memory'
     - '512Mi' # メモリサイズを指定
     - '--cpu'
     - '1' # CPU数を指定
-    - '--set-env-vars=GOOGLE_PROJECT_ID=innate-algebra-474710-f0'
+    # Cloud Runの環境変数としてSecret Managerから取得した値を設定
+    # アプリケーションが直接読み込むための環境変数を設定します
+    - '--set-env-vars=GOOGLE_PROJECT_ID=${_PROJECT_ID}'
     - '--set-env-vars=GOOGLE_CREDENTIALS_JSON_PATH=/workspace/google-credentials.json' # アプリケーションが読み込むパス
     - '--set-env-vars=IMAGEKIT_PRIVATE_KEY=$$(cat /workspace/IMAGEKIT_PRIVATE_KEY.txt)'
     - '--set-env-vars=LINE_CHANNEL_ID=$$(cat /workspace/LINE_CHANNEL_ID.txt)'
@@ -69,13 +91,11 @@ steps:
     - '--set-env-vars=NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY=$$(cat /workspace/NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY.txt)'
     - '--set-env-vars=NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT=$$(cat /workspace/NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT.txt)'
     - '--set-env-vars=VertexAIAPI=$$(cat /workspace/VertexAIAPI.txt)'
-  waitFor: ['Build Image'] # 'Build Image'ステップが完了するのを待つ
+  waitFor: ['Push Image'] # 'Push Image'ステップが完了するのを待つ
 
 options:
-  logging: CLOUD_LOGGING_ONLY
+  logging: CLOUD_LOGGING_ONLY # ビルドログをCloud Loggingにのみ出力
 
-# タイムアウトを1時間（デフォルト）からより長い時間に設定することもできます。
-# timeout: '3600s'
-
-# サービスアカウントをCloud Runデプロイメントに使用する場合は、以下のように指定します。
-# serviceAccount: 'projects/innate-algebra-474710-f0/serviceAccounts/aika-app@innate-algebra-474710-f0.iam.gserviceaccount.com'
+# Cloud Runデプロイメントに特定のサービスアカウントを使用する場合（オプション）
+# serviceAccount: 'projects/YOUR_PROJECT_NUMBER/serviceAccounts/YOUR_SERVICE_ACCOUNT_EMAIL'
+# 例: serviceAccount: 'projects/innate-algebra-474710-f0/serviceAccounts/aika-app@innate-algebra-474710-f0.iam.gserviceaccount.com'

@@ -6,7 +6,7 @@ import axios from 'axios';
 const auth = new google.auth.GoogleAuth({
   credentials: {
     client_email: process.env.GOOGLE_CLIENT_EMAIL,
-    private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\n/g, '\n'),
   },
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
@@ -26,27 +26,31 @@ export async function POST(req: NextRequest) {
     // Googleスプレッドシートへの書き込み
     await sheets.spreadsheets.values.append({
       spreadsheetId,
-      range: 'シート1!A:D', // 書き込み先のシート名と範囲
+      range: 'シート1!A:D',
       valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: [[timestamp, userId, userName || 'N/A', videoUrl]],
       },
     });
-
-    // ここが問題の箇所でした。「http://」を「https://」に修正します。
-    // さらに、将来的にも安定するよう、環境変数からベースURLを取得するように変更しました。
+    
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://serene-zabaione-8c4e2a.netlify.app';
     const videoAnalysisUrl = `${baseUrl}/api/analyze-video`;
 
-    // 動画解析APIを呼び出す（エラーが出てもスプレッドシート記録は成功させるため、ここでは待たない）
+    // 動画解析APIを非同期で呼び出す (記録の成否には影響させない)
     axios.post(videoAnalysisUrl, { videoUrl }).catch(error => {
+      // ここでのエラーはログに出力するのみ
       console.error('Failed to trigger video analysis:', error.message);
     });
 
     return NextResponse.json({ message: 'Successfully recorded in Spreadsheet' }, { status: 200 });
 
-  } catch (error: any) {
-    console.error('Error in spreadsheet API:', error.message);
-    return NextResponse.json({ message: 'Internal Server Error', error: error.message }, { status: 500 });
+  } catch (error) {
+    // TypeScriptのルールに準拠した、より安全なエラーハンドリング
+    let errorMessage = 'An unknown error occurred';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    console.error('Error in spreadsheet API:', errorMessage);
+    return NextResponse.json({ message: 'Internal Server Error', error: errorMessage }, { status: 500 });
   }
 }

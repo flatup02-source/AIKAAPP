@@ -25,7 +25,7 @@ steps:
     - '--build-arg'
     - 'STORAGE_BUCKET=$$STORAGE_BUCKET_VALUE'
     - '-t'
-    - 'gcr.io/innate-algebra-474710-f0/aikaapp:latest'
+    - 'gcr.io/aikaapp-584fa/aikaapp:latest'
     - '.'
   secretEnv:
     - 'GOOGLE_CREDENTIALS_JSON'
@@ -43,7 +43,7 @@ steps:
 # ==============================================================================
 - name: 'gcr.io/cloud-builders/docker'
   id: 'Push Image'
-  args: ['push', 'gcr.io/innate-algebra-474710-f0/aikaapp:latest']
+  args: ['push', 'gcr.io/aikaapp-584fa/aikaapp:latest']
   waitFor: ['Build Image']
 
 # ==============================================================================
@@ -56,7 +56,7 @@ steps:
     - 'deploy'
     - 'aikaapp'
     - '--image'
-    - 'gcr.io/innate-algebra-474710-f0/aikaapp:latest'
+    - 'gcr.io/aikaapp-584fa/aikaapp:latest'
     - '--region'
     - 'asia-northeast1'
     - '--platform'
@@ -88,21 +88,21 @@ steps:
 
 availableSecrets:
   secretManager:
-  - versionName: projects/innate-algebra-474710-f0/secrets/GOOGLE_CREDENTIALS_JSON/versions/latest
+  - versionName: projects/aikaapp-584fa/secrets/GOOGLE_CREDENTIALS_JSON/versions/latest
     env: 'GOOGLE_CREDENTIALS_JSON'
-  - versionName: projects/innate-algebra-474710-f0/secrets/IMAGEKIT_PRIVATE_KEY/versions/latest
+  - versionName: projects/aikaapp-584fa/secrets/IMAGEKIT_PRIVATE_KEY/versions/latest
     env: 'IMAGEKIT_PRIVATE_KEY'
-  - versionName: projects/innate-algebra-474710-f0/secrets/LINE_CHANNEL_ID/versions/latest
+  - versionName: projects/aikaapp-584fa/secrets/LINE_CHANNEL_ID/versions/latest
     env: 'LINE_CHANNEL_ID'
-  - versionName: projects/innate-algebra-474710-f0/secrets/LINE_CHANNEL_SECRET/versions/latest
+  - versionName: projects/aikaapp-584fa/secrets/LINE_CHANNEL_SECRET/versions/latest
     env: 'LINE_CHANNEL_SECRET'
-  - versionName: projects/innate-algebra-474710-f0/secrets/NEXT_PUBLIC_GOOGLE_SHEET_ID/versions/latest
+  - versionName: projects/aikaapp-5f84a/secrets/NEXT_PUBLIC_GOOGLE_SHEET_ID/versions/latest
     env: 'NEXT_PUBLIC_GOOGLE_SHEET_ID'
-  - versionName: projects/innate-algebra-474710-f0/secrets/NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY/versions/latest
+  - versionName: projects/aikaapp-584fa/secrets/NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY/versions/latest
     env: 'NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY'
-  - versionName: projects/innate-algebra-474710-f0/secrets/NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT/versions/latest
+  - versionName: projects/aikaapp-584fa/secrets/NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT/versions/latest
     env: 'NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT'
-  - versionName: projects/innate-algebra-474710-f0/secrets/VertexAIAPI/versions/latest
+  - versionName: projects/aikaapp-584fa/secrets/VertexAIAPI/versions/latest
     env: 'VertexAIAPI'
   - versionName: projects/aikaapp-584fa/secrets/FIREBASE_STORAGE_BUCKET_SECRET/versions/latest
     env: 'STORAGE_BUCKET_VALUE'

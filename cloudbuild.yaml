@@ -15,7 +15,7 @@ steps:
     - '--build-arg'
     - 'LINE_CHANNEL_SECRET=$$LINE_CHANNEL_SECRET'
     - '--build-arg'
-    - 'NEXT_PUBLIC_GOOGLE_SHEET_ID=$$NEXT_PUBLIC_GOOGLE_SHEET_ID'
+    - 'NEXTPUBLIC_GOOGLE_SHEET_ID=$$NEXTPUBLIC_GOOGLE_SHEET_ID'
     - '--build-arg'
     - 'NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY=$$NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY'
     - '--build-arg'
@@ -32,7 +32,7 @@ steps:
     - 'IMAGEKIT_PRIVATE_KEY'
     - 'LINE_CHANNEL_ID'
     - 'LINE_CHANNEL_SECRET'
-    - 'NEXT_PUBLIC_GOOGLE_SHEET_ID'
+    - 'NEXTPUBLIC_GOOGLE_SHEET_ID'
     - 'NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY'
     - 'NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT'
     - 'VertexAIAPI'
@@ -75,7 +75,7 @@ steps:
     - '--set-secrets'
     - 'LINE_CHANNEL_SECRET=LINE_CHANNEL_SECRET:latest'
     - '--set-secrets'
-    - 'NEXT_PUBLIC_GOOGLE_SHEET_ID=NEXT_PUBLIC_GOOGLE_SHEET_ID:latest'
+    - 'NEXTPUBLIC_GOOGLE_SHEET_ID=NEXTPUBLIC_GOOGLE_SHEET_ID:latest'
     - '--set-secrets'
     - 'NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY=NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY:latest'
     - '--set-secrets'
@@ -96,8 +96,8 @@ availableSecrets:
     env: 'LINE_CHANNEL_ID'
   - versionName: projects/aikaapp-584fa/secrets/LINE_CHANNEL_SECRET/versions/latest
     env: 'LINE_CHANNEL_SECRET'
-  - versionName: projects/aikaapp-584fa/secrets/NEXT_PUBLIC_GOOGLE_SHEET_ID/versions/latest
-    env: 'NEXT_PUBLIC_GOOGLE_SHEET_ID'
+  - versionName: projects/aikaapp-584fa/secrets/NEXTPUBLIC_GOOGLE_SHEET_ID/versions/latest
+    env: 'NEXTPUBLIC_GOOGLE_SHEET_ID'
   - versionName: projects/aikaapp-584fa/secrets/NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY/versions/latest
     env: 'NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY'
   - versionName: projects/aikaapp-584fa/secrets/NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT/versions/latest

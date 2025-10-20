@@ -76,3 +76,7 @@ availableSecrets:
     env: 'NEXT_PUBLIC_FIREBASE_APP_ID'
   - versionName: projects/$PROJECT_ID/secrets/NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID/versions/latest
     env: 'NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID'
+
+# ビルドのオプション設定
+options:
+  logging: CLOUD_LOGGING_ONLY

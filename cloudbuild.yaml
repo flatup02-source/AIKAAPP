@@ -96,7 +96,7 @@ availableSecrets:
     env: 'LINE_CHANNEL_ID'
   - versionName: projects/aikaapp-584fa/secrets/LINE_CHANNEL_SECRET/versions/latest
     env: 'LINE_CHANNEL_SECRET'
-  - versionName: projects/aikaapp-5f84a/secrets/NEXT_PUBLIC_GOOGLE_SHEET_ID/versions/latest
+  - versionName: projects/aikaapp-584fa/secrets/NEXT_PUBLIC_GOOGLE_SHEET_ID/versions/latest
     env: 'NEXT_PUBLIC_GOOGLE_SHEET_ID'
   - versionName: projects/aikaapp-584fa/secrets/NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY/versions/latest
     env: 'NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY'

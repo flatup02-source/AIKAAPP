@@ -1,88 +1,21 @@
+# filename: cloudbuild.yaml
+# 目的: ビルドが確実に通るかの最小構成で検証する
 steps:
-# ==============================================================================
-# ステップ1: Dockerイメージのビルド
-# ==============================================================================
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'Build Image'
-  args:
-    - 'build'
-    - '--build-arg'
-    - 'LINE_CHANNEL_ID=$$LINE_CHANNEL_ID'
-    - '--build-arg'
-    - 'LINE_CHANNEL_SECRET=$$LINE_CHANNEL_SECRET'
-    - '--build-arg'
-    - 'NEXTPUBLIC_GOOGLE_SHEET_ID=$$NEXTPUBLIC_GOOGLE_SHEET_ID'
-    - '--build-arg'
-    - 'VertexAIAPI=$$VertexAIAPI'
-    - '--build-arg'
-    - 'STORAGE_BUCKET=$$STORAGE_BUCKET_VALUE'
-    - '-t'
-    - 'gcr.io/aikaapp-584fa/aikaapp:latest'
-    - '.'
-  secretEnv:
-    - 'GOOGLE_CREDENTIALS_JSON'
-    - 'LINE_CHANNEL_ID'
-    - 'LINE_CHANNEL_SECRET'
-    - 'NEXTPUBLIC_GOOGLE_SHEET_ID'
-    - 'VertexAIAPI'
-    - 'STORAGE_BUCKET_VALUE'
+  # 1) Node イメージで依存をインストール
+  - name: node:20-alpine
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        corepack enable
+        npm ci
+        npm run build
+        # 必要に応じて test も: npm test
 
-# ==============================================================================
-# ステップ2: ビルドされたDockerイメージをContainer Registryにプッシュ
-# ==============================================================================
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'Push Image'
-  args: ['push', 'gcr.io/aikaapp-584fa/aikaapp:latest']
-  waitFor: ['Build Image']
-
-# ==============================================================================
-# ステップ3: DockerイメージをCloud Runにデプロイ
-# ==============================================================================
-- name: 'gcr.io/cloud-builders/gcloud'
-  id: 'Deploy to Cloud Run'
-  args:
-    - 'run'
-    - 'deploy'
-    - 'aikaapp'
-    - '--image'
-    - 'gcr.io/aikaapp-584fa/aikaapp:latest'
-    - '--region'
-    - 'asia-northeast1'
-    - '--platform'
-    - 'managed'
-    - '--allow-unauthenticated'
-    - '--memory'
-    - '512Mi'
-    - '--cpu'
-    - '1'
-    - '--set-secrets'
-    - 'GOOGLE_CREDENTIALS_JSON=GOOGLE_CREDENTIALS_JSON:latest'
-    - '--set-secrets'
-    - 'LINE_CHANNEL_ID=LINE_CHANNEL_ID:latest'
-    - '--set-secrets'
-    - 'LINE_CHANNEL_SECRET=LINE_CHANNEL_SECRET:latest'
-    - '--set-secrets'
-    - 'NEXTPUBLIC_GOOGLE_SHEET_ID=NEXTPUBLIC_GOOGLE_SHEET_ID:latest'
-    - '--set-secrets'
-    - 'VertexAIAPI=VertexAIAPI:latest'
-    - '--set-secrets'
-    - 'STORAGE_BUCKET=FIREBASE_STORAGE_BUCKET_SECRET:latest'
-  waitFor: ['Push Image']
-
-availableSecrets:
-  secretManager:
-  - versionName: projects/aikaapp-584fa/secrets/GOOGLE_CREDENTIALS_JSON/versions/latest
-    env: 'GOOGLE_CREDENTIALS_JSON'
-  - versionName: projects/aikaapp-584fa/secrets/LINE_CHANNEL_ID/versions/latest
-    env: 'LINE_CHANNEL_ID'
-  - versionName: projects/aikaapp-584fa/secrets/LINE_CHANNEL_SECRET/versions/latest
-    env: 'LINE_CHANNEL_SECRET'
-  - versionName: projects/aikaapp-584fa/secrets/NEXTPUBLIC_GOOGLE_SHEET_ID/versions/latest
-    env: 'NEXTPUBLIC_GOOGLE_SHEET_ID'
-  - versionName: projects/aikaapp-584fa/secrets/VertexAIAPI/versions/latest
-    env: 'VertexAIAPI'
-  - versionName: projects/aikaapp-584fa/secrets/FIREBASE_STORAGE_BUCKET_SECRET/versions/latest
-    env: 'STORAGE_BUCKET_VALUE'
-
+# 成果物を Cloud Storage 等に出さない最小構成
 options:
   logging: CLOUD_LOGGING_ONLY
+
+# ビルドキャッシュを有効化（同一イメージ再利用時）
+# Cloud Build のキャッシュは docker builder 使用時のみ強いですが、ここでは最小構成のため省略
+timeout: "1200s"

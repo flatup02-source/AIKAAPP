@@ -238,11 +238,6 @@ export default function AikaFormPage() {
         </header>
 
         {/* ... 以降のフォーム部分は変更なし ... */}
-        <div className="flex justify-center">
-          <div className="relative p-1 rounded-2xl" style={{boxShadow: '0 0 40px rgba(76, 201, 240, 0.4)'}}>
-            <Image src="https://ik.imagekit.io/FLATUPGYM/b9d4a676-0903-444c-91d2-50222dc3294f.png?updatedAt=1760340781490" alt="AIコーチ AIKA 18号" width={500} height={500} className="rounded-xl shadow-2xl object-cover" priority />
-          </div>
-        </div>
         <main className="bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-lg space-y-8 border border-white/50">
           <div className="space-y-6">
             <div>

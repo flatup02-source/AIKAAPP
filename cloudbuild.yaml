@@ -12,7 +12,7 @@ steps:
     - 'NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID'
   args: [
     'build',
-    '--tag', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/aika-app-repository/aika-app:$COMMIT_SHA',
+    '--tag', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/aika-app-repository/aika-app:$BUILD_ID',
     '--build-arg', 'NEXT_PUBLIC_FIREBASE_API_KEY=$$NEXT_PUBLIC_FIREBASE_API_KEY',
     '--build-arg', 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=$$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
     '--build-arg', 'NEXT_PUBLIC_FIREBASE_PROJECT_ID=$$NEXT_PUBLIC_FIREBASE_PROJECT_ID',
@@ -40,7 +40,7 @@ steps:
     - 'deploy'
     - 'aika-app'
     - '--image'
-    - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/aika-app-repository/aika-app:$COMMIT_SHA'
+    - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/aika-app-repository/aika-app:$BUILD_ID'
     - '--region'
     - 'asia-northeast1'
     - '--platform'
@@ -57,7 +57,7 @@ steps:
 
 # 作成したイメージを登録します
 images:
-- 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/aika-app-repository/aika-app:$COMMIT_SHA'
+- 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/aika-app-repository/aika-app:$BUILD_ID'
 
 # ビルド時に利用可能なシークレットを定義します
 availableSecrets:

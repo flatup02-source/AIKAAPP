@@ -3,7 +3,7 @@
 import { useState, ChangeEvent, useEffect } from "react";
 import Image from "next/image";
 import axios from "axios";
-import { ref, uploadBytes } from "firebase/storage";
+import { ref, uploadBytesResumable, UploadTaskSnapshot } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 
 import liff from "@line/liff";
@@ -68,7 +68,7 @@ export default function AikaFormPage() {
     }
   };
 
-  const handleUpload = async () => {
+  const handleUpload = () => {
     if (!file) {
       alert("まず動画ファイルを選択してください。");
       return;
@@ -77,67 +77,74 @@ export default function AikaFormPage() {
     setUploadProgress(0);
     setViewState("analyzing"); // 解析中の画面に切り替え
 
-    try {
-      const liffUserId = liff.getIDToken();
-      if (!liffUserId) {
-        alert("LINEの認証情報を取得できませんでした。再度お試しください。");
-        setViewState("form");
-        return;
-      }
-
-      // GCSへの直接アップロード処理
-      const bucketName = "aika-storage-bucket2";
-      const fileName = `${Date.now()}_${file.name}`;
-      const storageRef = ref(storage, `videos/${fileName}`);
-
-      // 1. GCSにファイルを直接アップロード
-      await uploadBytes(storageRef, file);
-      console.log("GCSへのアップロードが完了しました。");
-      setUploadProgress(100); // GCS upload doesn't have progress, so set to 100 after completion
-
-      // 2. 正しいgcsUriを組み立てる
-      const gcsUri = `gs://${bucketName}/videos/${fileName}`;
-
-      // 3. 正しいgcsUriを使って、APIを呼び出す
-      const analysisResponse = await axios.post("/api/analyze-video", {
-        gcsUri: gcsUri,
-        idolFighterName,
-        liffUserId: liffUserId,
-        theme: theme,
-      });
-
-      const { power_level, comment } = analysisResponse.data;
-
-      // 4. 全てのデータをスプレッドシートに記録
-      await axios.post("/api/spreadsheet", {
-        userName,
-        theme,
-        requests,
-        videoUrl: gcsUri, // Using gcsUri as videoUrl
-        fileName: fileName,
-        fileType: file.type,
-        fileSize: file.size,
-        powerLevel: power_level,
-        aiComment: comment,
-      });
-      
-      // 5. 結果を画面に表示する
-      setPowerLevel(power_level);
-      setAiComment(comment);
-      setViewState("result"); // 結果表示画面に切り替え
-
-    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-      console.error(err);
-      const errorMessage = JSON.stringify(
-        err.response?.data || err.message || err,
-        null,
-        2
-      );
-      alert(`エラー詳細:\n\n${errorMessage}`);
-      setViewState("form"); // エラー時はフォームに戻す
-    } finally {
+    const liffUserId = liff.getIDToken();
+    if (!liffUserId) {
+      alert("LINEの認証情報を取得できませんでした。再度お試しください。");
+      setViewState("form");
       setUploading(false);
+      return;
     }
+
+    const bucketName = "aika-storage-bucket2";
+    const fileName = `${Date.now()}_${file.name}`;
+    const storageRef = ref(storage, `videos/${fileName}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on('state_changed',
+      (snapshot: UploadTaskSnapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setUploadProgress(Math.round(progress));
+      },
+      (error) => {
+        console.error("Upload Error:", error);
+        alert(`アップロード中にエラーが発生しました: ${error.message}`);
+        setViewState("form");
+        setUploading(false);
+      },
+      async () => { // on success
+        try {
+          console.log("GCSへのアップロードが完了しました。");
+          const gcsUri = `gs://${bucketName}/videos/${fileName}`;
+
+          const analysisResponse = await axios.post("/api/analyze-video", {
+            gcsUri: gcsUri,
+            idolFighterName,
+            liffUserId: liffUserId,
+            theme: theme,
+          });
+
+          const { power_level, comment } = analysisResponse.data;
+
+          await axios.post("/api/spreadsheet", {
+            userName,
+            theme,
+            requests,
+            videoUrl: gcsUri, // Using gcsUri as videoUrl
+            fileName: fileName,
+            fileType: file.type,
+            fileSize: file.size,
+            powerLevel: power_level,
+            aiComment: comment,
+          });
+          
+          setPowerLevel(power_level);
+          setAiComment(comment);
+          setViewState("result"); // 結果表示画面に切り替え
+
+        } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+          console.error(err);
+          const errorMessage = JSON.stringify(
+            err.response?.data || err.message || err,
+            null,
+            2
+          );
+          alert(`エラー詳細:\n\n${errorMessage}`);
+          setViewState("form"); // エラー時はフォームに戻す
+        } finally {
+          setUploading(false);
+        }
+      }
+    );
   };
 
   const themes = [
@@ -232,9 +239,9 @@ export default function AikaFormPage() {
           <Image
             src="https://ik.imagekit.io/FLATUPGYM/b9d4a676-0903-444c-91d2-50222dc3294f.png?updatedAt=1760340781490"
             alt="AIKA 18"
-            width={200}
-            height={200}
-            className="mx-auto mb-4 rounded-full"
+            width={400}
+            height={400}
+            className="w-full h-auto max-w-xs mx-auto mb-4 rounded-lg md:w-48 md:h-48 md:rounded-full"
           />
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800 drop-shadow-sm leading-tight">
             この10秒で、あなたのフォームはもっと輝く。

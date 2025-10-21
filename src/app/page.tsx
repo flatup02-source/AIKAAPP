@@ -229,11 +229,18 @@ export default function AikaFormPage() {
     >
       <div className="w-full max-w-2xl space-y-12">
         <header className="text-center">
+          <Image
+            src="https://ik.imagekit.io/FLATUPGYM/b9d4a676-0903-444c-91d2-50222dc3294f.png?updatedAt=1760340781490"
+            alt="AIKA 18"
+            width={200}
+            height={200}
+            className="mx-auto mb-4 rounded-full"
+          />
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800 drop-shadow-sm leading-tight">
-            その10秒が、あなたのフォームを次のレベルへ導く。
+            この10秒で、あなたのフォームはもっと輝く。
           </h1>
           <p className="text-xl md:text-2xl font-semibold text-gray-600 mt-4">
-            専属AIトレーナー「AIKA 18号」が、あなたの動きを精密に解析し、パーソナルフィードバックをお届けします。
+            はじめまして！私があなたの専属AIトレーナー「AIKA」よ。あなたの動きを分析して、もっと上手になるためのアドバイスを送るわね。
           </p>
         </header>
 
@@ -246,13 +253,12 @@ export default function AikaFormPage() {
             </div>
             <div>
               <div className="text-center mb-4">
-                <p className="font-bold text-gray-800">{userName}さん、こんにちは。</p>
-                <p className="font-bold text-gray-800">AI18号だ。君が求める未来へ、私が導く。</p>
-                <p className="text-sm text-gray-600 mt-2">今回のテーマを1つ選んでくれ。それによって、私からの言葉も変わってくる。</p>
+                <p className="font-bold text-gray-800">{userName}さん、こんにちは！一緒に頑張りましょう！</p>
+                <p className="text-sm text-gray-600 mt-2">まずは、今日のテーマを一つ選んでくれるかな？あなたの目標に合わせて、私もアドバイスの内容を変えていくわ。</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {themes.map((item) => (
-                  <button key={item} onClick={() => handleThemeSelect(item)} className={`w-full text-center px-5 py-4 rounded-xl transition-all duration-200 font-semibold text-sm ${ theme === item ? "bg-blue-500 text-white shadow-lg scale-105 transform" : "bg-white/50 text-gray-700 hover:bg-white" }`}>{item}</button>
+                  <button key={item} onClick={() => handleThemeSelect(item)} className={`w-full text-center px-5 py-4 rounded-xl transition-all duration-200 font-semibold text-sm ${ theme === item ? "bg-blue-500 text-white shadow-lg scale-105 transform" : "bg-white text-gray-800 hover:bg-gray-100" }`}>{item}</button>
                 ))}
               </div>
               {aiIntroduction && (
@@ -262,12 +268,11 @@ export default function AikaFormPage() {
               )}
             </div>
             <div>
-              <label htmlFor="requests" className="block text-sm font-bold text-gray-700 mb-2">ご要望や特に見てほしい点など</label>
-              <textarea id="requests" rows={4} value={requests} onChange={(e) => setRequests(e.target.value)} placeholder="（例：右ストレートの軌道、ステップインのタイミングなど）" className="w-full bg-white/50 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200" />
+              <label htmlFor="requests" className="block text-sm font-bold text-gray-700 mb-2">もし「特にここを見てほしい！」というポイントがあったら、気軽に教えてね！</label>
+              <textarea id="requests" rows={4} value={requests} onChange={(e) => setRequests(e.target.value)} placeholder="（例：右ストレートがブレちゃう、ステップインのタイミングがわからない…など）" className="w-full bg-white/50 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200" />
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">私に、君の「のびしろ」を見せてくれ。</label>
-              <p className="text-sm text-gray-600 mb-2">完成されたフォームには興味ない。今の君の動きに眠る、未来の強さの原石を私が見つけ出す。安心して、今の全てをぶつけてみてくれ。（10秒以内の動画をどうぞ）</p>
+              <p className="text-sm text-gray-600 mb-2">準備ができたら、あなたの「今」の動きを見せて。完璧じゃなくて大丈夫。あなたの動きの中に眠る「未来の強さ」の原石を、私が見つけ出すから。さあ、撮影ボタンを押して！</p>
 {/* ===== アップロードUI ここから ===== */}
 <div className="w-full max-w-md mx-auto p-4 bg-slate-100 rounded-2xl shadow-inner space-y-4">
 

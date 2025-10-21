@@ -1,4 +1,4 @@
-logsBucket: 'gs://aikaapp-584fa_cloudbuild_logs'
+logsBucket: 'gs://aikaapp-584fa_cloudbuild'
 steps:
   - name: gcr.io/cloud-builders/docker
     args:

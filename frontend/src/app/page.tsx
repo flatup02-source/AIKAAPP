@@ -128,20 +128,12 @@ export default function AikaFormPage() {
       setUploadProgress(0);
       setViewState("analyzing");
 
-      console.log("Step 1: Getting authentication info...");
-      const liffUserId = liff.getIDToken();
-      if (!liffUserId) {
-        alert("LINEのユーザーIDが取得できませんでした。");
-        setViewState("form");
-        setUploading(false);
-        return;
-      }
-      console.log(`Step 2: Got user ID. Creating Firebase Storage reference...`);
+      console.log(`Step 1: LINE ID obtained: ${lineId}. Creating Firebase Storage reference...`);
 
       const bucketName = "aika-storage-bucket2";
       const fileName = `${Date.now()}_${file.name}`;
-      const storageRef = ref(storage, `videos/${fileName}`);
-      console.log(`Step 3: Created reference (path: ${storageRef.fullPath}). Starting upload task...`);
+      const storageRef = ref(storage, `users/${lineId}/videos/${fileName}`); // Path changed to use lineId
+      console.log(`Step 2: Created reference (path: ${storageRef.fullPath}). Starting upload task...`);
 
       const uploadTask = uploadBytesResumable(storageRef, file);
 

@@ -35,17 +35,24 @@ export default function AikaFormPage() {
       // ★★★ ここからが重要 ★★★
       try {
         console.log("LIFF初期化を開始します...");
+        console.log("NEXT_PUBLIC_LIFF_ID:", process.env.NEXT_PUBLIC_LIFF_ID); // Debugging LIFF ID
 
         // liff.init の呼び出し
-        await liff.init({ liffId: "2008276179-41Dz3bbJ" }); // Using hardcoded ID for now
+        await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! });
+        await liff.ready(); // Add liff.ready
 
         console.log("liff.init 成功。");
 
+        if (!liff.isInClient()) { // Check if in LINE app
+          setLiffMessage("このアプリはLINEアプリ内で開いてください。");
+          alert("このアプリはLINEアプリ内で開いてください。");
+          return;
+        }
+
         if (!liff.isLoggedIn()) {
           console.log("ログインされていません。ログインを実行します。");
-          // LINEアプリ内であれば、liff.login() は不要な場合もありますが、
-          // 呼び出しても自動でログイン情報を引き継ぎます。
           liff.login();
+          return; // Redirects, so return here
         } else {
           console.log("ログイン済みです。プロフィールを取得します。");
 
@@ -70,7 +77,7 @@ export default function AikaFormPage() {
           errorMessage = error.message;
         } else {
           try { errorMessage = JSON.stringify(error); }
-          catch (e) { errorMessage = String(error); }
+          catch (e) { errorMessage = String(e); }
         }
 
         // このアラートが表示されるはずです
@@ -109,6 +116,14 @@ export default function AikaFormPage() {
         alert("まず動画ファイルを選択してください。");
         return;
       }
+      // Add upload guard for lineId
+      if (!lineId) {
+        alert("LINE認証が完了していません。ページを再読み込みするか、LINEアプリ内で開いてください。");
+        setViewState("form");
+        setUploading(false);
+        return;
+      }
+
       setUploading(true);
       setUploadProgress(0);
       setViewState("analyzing");
@@ -309,6 +324,11 @@ export default function AikaFormPage() {
             はじめまして！私があなたの専属AIトレーナー「AIKA」よ。あなたの動きを分析して、もっと上手になるためのアドバイスを送るわね。
           </p>
         </header>
+
+        {/* Temporary UI for debugging lineId */}
+        <div className="text-right text-xs text-gray-500 pr-4">
+          LINE ID: {lineId ?? 'none'}
+        </div>
 
         {/* ... 以降のフォーム部分は変更なし ... */}
         <main className="bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-lg space-y-8 border border-white/50">

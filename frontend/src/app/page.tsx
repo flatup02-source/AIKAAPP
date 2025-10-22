@@ -237,7 +237,7 @@ export default function AikaFormPage() {
       <div className="w-full max-w-2xl space-y-12">
         <header className="text-center">
           <Image
-            src="https://ik.imagekit.io/FLATUPGYM/b9d4a676-0903-444c-91d2-50222dc3294f.png?updatedAt=1760340781490"
+            src={`https://ik.imagekit.io/FLATUPGYM/b9d4a676-0903-444c-91d2-50222dc3294f.png?updatedAt=1760340781490&v=${new Date().getTime()}`}
             alt="AIKA 18"
             width={400}
             height={400}

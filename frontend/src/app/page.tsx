@@ -20,6 +20,7 @@ export default function AikaFormPage() {
   const [theme, setTheme] = useState("");
   const [requests, setRequests] = useState("");
   const [liffMessage, setLiffMessage] = useState("あなたの最強のパートナー、AI18号を起動しています…");
+  const [lineId, setLineId] = useState<string | null>(null); // LIFFユーザーIDを保存するstate
   
   // ★★★ 新しい状態を追加 ★★★
   const [viewState, setViewState] = useState<ViewState>("form");
@@ -31,19 +32,52 @@ export default function AikaFormPage() {
 
   useEffect(() => {
     const initializeLiff = async () => {
+      // ★★★ ここからが重要 ★★★
       try {
-        await liff.init({ liffId: "2008276179-41Dz3bbJ" });
-        if (liff.isLoggedIn()) {
-          const profile = await liff.getProfile();
-          setUserName(profile.displayName);
-          setLiffMessage("LIFFを初期化中..."); // 初期化メッセージを更新
+        console.log("LIFF初期化を開始します...");
+
+        // liff.init の呼び出し
+        await liff.init({ liffId: "2008276179-41Dz3bbJ" }); // Using hardcoded ID for now
+
+        console.log("liff.init 成功。");
+
+        if (!liff.isLoggedIn()) {
+          console.log("ログインされていません。ログインを実行します。");
+          // LINEアプリ内であれば、liff.login() は不要な場合もありますが、
+          // 呼び出しても自動でログイン情報を引き継ぎます。
+          liff.login();
         } else {
-          setLiffMessage("LIFFにログインしてください。");
+          console.log("ログイン済みです。プロフィールを取得します。");
+
+          // プロフィールの取得
+          const profile = await liff.getProfile();
+
+          console.log("プロフィール取得成功:", profile.displayName);
+
+          // 取得したIDや名前をReactのstateに保存する処理
+          setUserName(profile.displayName);
+          setLineId(profile.userId); // LIFFユーザーIDを保存
+
+          setLiffMessage("LIFFを初期化中..."); // Keep existing message update
         }
-      } catch (e) {
-        console.error("LIFF Init Error:", e);
-        setLiffMessage("LIFFの初期化に失敗。");
+
+      } catch (error: any) {
+        // ★★★ もし初期化やプロフィール取得に失敗したら、ここでエラーを出す ★★★
+        console.error("LIFFの初期化またはプロフィール取得に失敗しました:", error);
+
+        let errorMessage = "不明なエラー";
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        } else {
+          try { errorMessage = JSON.stringify(error); }
+          catch (e) { errorMessage = String(error); }
+        }
+
+        // このアラートが表示されるはずです
+        alert(`LIFFの初期化に失敗しました: ${errorMessage}`);
+        setLiffMessage("LIFFの初期化に失敗。"); // Keep existing message update
       }
+      // ★★★ ここまで ★★★
     };
     initializeLiff();
   }, []);

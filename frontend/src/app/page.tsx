@@ -157,7 +157,7 @@ export default function AikaFormPage() {
             const analysisResponse = await axios.post("/api/analyze-video", {
               gcsUri: gcsUri,
               idolFighterName,
-              liffUserId: liffUserId,
+              liffUserId: lineId, // Use lineId from state
               theme: theme,
             });
             console.log("Step 5: Analysis API call successful. Saving to spreadsheet...");

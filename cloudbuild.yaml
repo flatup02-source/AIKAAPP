@@ -9,3 +9,5 @@ steps:
       ]
 images:
   - gcr.io/$PROJECT_ID/aika-backend:latest
+options:
+  logging: CLOUD_LOGGING_ONLY

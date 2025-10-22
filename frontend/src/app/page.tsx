@@ -21,6 +21,8 @@ export default function AikaFormPage() {
   const [requests, setRequests] = useState("");
   const [liffMessage, setLiffMessage] = useState("あなたの最強のパートナー、AI18号を起動しています…");
   const [lineId, setLineId] = useState<string | null>(null); // LIFFユーザーIDを保存するstate
+  const [isInClient, setIsInClient] = useState<boolean | null>(null); // LIFFがLINEアプリ内で動作しているか
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null); // LIFFがログイン済みか
   
   // ★★★ 新しい状態を追加 ★★★
   const [viewState, setViewState] = useState<ViewState>("form");
@@ -42,6 +44,9 @@ export default function AikaFormPage() {
         await liff.ready(); // Add liff.ready
 
         console.log("liff.init 成功。");
+
+        setIsInClient(liff.isInClient()); // Set isInClient state
+        setIsLoggedIn(liff.isLoggedIn()); // Set isLoggedIn state
 
         if (!liff.isInClient()) { // Check if in LINE app
           setLiffMessage("このアプリはLINEアプリ内で開いてください。");
@@ -317,9 +322,11 @@ export default function AikaFormPage() {
           </p>
         </header>
 
-        {/* Temporary UI for debugging lineId */}
+        {/* Temporary UI for debugging LIFF state */}
         <div className="text-right text-xs text-gray-500 pr-4">
-          LINE ID: {lineId ?? 'none'}
+          LINE ID: {lineId ?? 'none'}<br/>
+          isInClient: {String(isInClient)}<br/>
+          isLoggedIn: {String(isLoggedIn)}
         </div>
 
         {/* ... 以降のフォーム部分は変更なし ... */}

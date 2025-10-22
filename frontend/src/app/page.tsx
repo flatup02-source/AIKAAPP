@@ -68,83 +68,108 @@ export default function AikaFormPage() {
     }
   };
 
-  const handleUpload = () => {
-    if (!file) {
-      alert("まず動画ファイルを選択してください。");
-      return;
-    }
-    setUploading(true);
-    setUploadProgress(0);
-    setViewState("analyzing"); // 解析中の画面に切り替え
+  const handleUpload = async () => {
+    console.log("handleUpload function executed.");
+    try {
+      if (!file) {
+        alert("まず動画ファイルを選択してください。");
+        return;
+      }
+      setUploading(true);
+      setUploadProgress(0);
+      setViewState("analyzing");
 
-    const liffUserId = liff.getIDToken();
-    if (!liffUserId) {
-      alert("LINEの認証情報を取得できませんでした。再度お試しください。");
-      setViewState("form");
-      setUploading(false);
-      return;
-    }
-
-    const bucketName = "aika-storage-bucket2";
-    const fileName = `${Date.now()}_${file.name}`;
-    const storageRef = ref(storage, `videos/${fileName}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
-
-    uploadTask.on('state_changed',
-      (snapshot: UploadTaskSnapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setUploadProgress(Math.round(progress));
-      },
-      (error) => {
-        console.error("Upload Error:", error);
-        alert(`アップロード中にエラーが発生しました: ${error.message}`);
+      console.log("Step 1: Getting authentication info...");
+      const liffUserId = liff.getIDToken();
+      if (!liffUserId) {
+        alert("LINEのユーザーIDが取得できませんでした。");
         setViewState("form");
         setUploading(false);
-      },
-      async () => { // on success
-        try {
-          console.log("GCSへのアップロードが完了しました。");
-          const gcsUri = `gs://${bucketName}/videos/${fileName}`;
+        return;
+      }
+      console.log(`Step 2: Got user ID. Creating Firebase Storage reference...`);
 
-          const analysisResponse = await axios.post("/api/analyze-video", {
-            gcsUri: gcsUri,
-            idolFighterName,
-            liffUserId: liffUserId,
-            theme: theme,
-          });
+      const bucketName = "aika-storage-bucket2";
+      const fileName = `${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, `videos/${fileName}`);
+      console.log(`Step 3: Created reference (path: ${storageRef.fullPath}). Starting upload task...`);
 
-          const { power_level, comment } = analysisResponse.data;
+      const uploadTask = uploadBytesResumable(storageRef, file);
 
-          await axios.post("/api/spreadsheet", {
-            userName,
-            theme,
-            requests,
-            videoUrl: gcsUri, // Using gcsUri as videoUrl
-            fileName: fileName,
-            fileType: file.type,
-            fileSize: file.size,
-            powerLevel: power_level,
-            aiComment: comment,
-          });
-          
-          setPowerLevel(power_level);
-          setAiComment(comment);
-          setViewState("result"); // 結果表示画面に切り替え
-
-        } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-          console.error(err);
-          const errorMessage = JSON.stringify(
-            err.response?.data || err.message || err,
-            null,
-            2
-          );
-          alert(`エラー詳細:\n\n${errorMessage}`);
-          setViewState("form"); // エラー時はフォームに戻す
-        } finally {
+      uploadTask.on('state_changed',
+        (snapshot: UploadTaskSnapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log(`Upload is ${progress}% done`);
+          setUploadProgress(Math.round(progress));
+        },
+        (error) => {
+          console.error("Upload task failed:", error);
+          alert(`アップロードに失敗しました: ${error.code} - ${error.message}`);
+          setViewState("form");
           setUploading(false);
+        },
+        async () => { // on success
+          try {
+            console.log("Step 4: Upload to GCS complete. Calling analysis API...");
+            const gcsUri = `gs://${bucketName}/videos/${fileName}`;
+
+            const analysisResponse = await axios.post("/api/analyze-video", {
+              gcsUri: gcsUri,
+              idolFighterName,
+              liffUserId: liffUserId,
+              theme: theme,
+            });
+            console.log("Step 5: Analysis API call successful. Saving to spreadsheet...");
+
+            const { power_level, comment } = analysisResponse.data;
+
+            await axios.post("/api/spreadsheet", {
+              userName,
+              theme,
+              requests,
+              videoUrl: gcsUri, // Using gcsUri as videoUrl
+              fileName: fileName,
+              fileType: file.type,
+              fileSize: file.size,
+              powerLevel: power_level,
+              aiComment: comment,
+            });
+            console.log("Step 6: Spreadsheet save successful. Displaying results.");
+            
+            setPowerLevel(power_level);
+            setAiComment(comment);
+            setViewState("result");
+
+          } catch (err: any) { // Catch for API calls
+            console.error("Error during post-upload API calls:", err);
+            const errorMessage = JSON.stringify(
+              err.response?.data || err.message || err,
+              null,
+              2
+            );
+            alert(`アップロード後にエラーが発生しました:\n\n${errorMessage}`);
+            setViewState("form");
+          } finally {
+            setUploading(false);
+          }
+        }
+      );
+    } catch (error: any) {
+      console.error("A fatal error occurred in the upload process:", error);
+      let errorMessage = "An unknown error occurred";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else {
+        try {
+          errorMessage = JSON.stringify(error);
+        } catch (e) {
+          errorMessage = String(error);
         }
       }
-    );
+      alert(`致命的なエラーが発生しました: ${errorMessage}`);
+      setViewState("form");
+      setUploading(false);
+    }
   };
 
   const themes = [

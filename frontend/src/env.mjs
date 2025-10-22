@@ -18,6 +18,7 @@ export const env = createEnv({
     NEXT_PUBLIC_FIREBASE_APP_ID: z.string().min(1),
     NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: z.string().min(1),
     NEXT_PUBLIC_STORAGE_BUCKET: z.string().min(1),
+    NEXT_PUBLIC_LIFF_ID: z.string().min(1),
   },
 
   // Next.jsが環境変数を読み込むための設定
@@ -32,5 +33,6 @@ export const env = createEnv({
     NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
     NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
     NEXT_PUBLIC_STORAGE_BUCKET: process.env.NEXT_PUBLIC_STORAGE_BUCKET,
+    NEXT_PUBLIC_LIFF_ID: process.env.NEXT_PUBLIC_LIFF_ID,
   },
 });

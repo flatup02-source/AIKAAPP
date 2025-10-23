@@ -32,59 +32,28 @@ export default function AikaFormPage() {
 
   useEffect(() => {
     const initializeLiff = async () => {
-      // ★★★ ここからが重要 ★★★
       try {
-        console.log("LIFF初期化を開始します...");
-        console.log("NEXT_PUBLIC_LIFF_ID:", process.env.NEXT_PUBLIC_LIFF_ID); // Debugging LIFF ID
-
-        // liff.init の呼び出し
+        console.log("LIFF初期化開始:", process.env.NEXT_PUBLIC_LIFF_ID);
         await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! });
-        await liff.ready(); // Add liff.ready
 
-        console.log("liff.init 成功。");
-
-        if (!liff.isInClient()) { // Check if in LINE app
-          setLiffMessage("このアプリはLINEアプリ内で開いてください。");
-          alert("このアプリはLINEアプリ内で開いてください。");
+        if (!liff.isLoggedIn()) {
+          liff.login({ redirectUri: window.location.href });
           return;
         }
 
-        if (!liff.isLoggedIn()) {
-          console.log("ログインされていません。ログインを実行します。");
-          liff.login();
-          return; // Redirects, so return here
+        const profile = await liff.getProfile();
+        console.log("ログイン成功:", profile.displayName);
+        setUserName(profile.displayName);
+        setLineId(profile.userId);
+
+      } catch (err: unknown) {
+        console.error("LIFF初期化エラー:", err);
+        if (err instanceof Error) {
+          alert(`LIFF初期化に失敗しました: ${err.message}。LINEアプリ内で開いてください。`);
         } else {
-          console.log("ログイン済みです。プロフィールを取得します。");
-
-          // プロフィールの取得
-          const profile = await liff.getProfile();
-
-          console.log("プロフィール取得成功:", profile.displayName);
-
-          // 取得したIDや名前をReactのstateに保存する処理
-          setUserName(profile.displayName);
-          setLineId(profile.userId); // LIFFユーザーIDを保存
-
-          setLiffMessage("LIFFを初期化中..."); // Keep existing message update
+          alert("LIFF初期化に失敗しました。LINEアプリ内で開いてください。");
         }
-
-      } catch (error: any) {
-        // ★★★ もし初期化やプロフィール取得に失敗したら、ここでエラーを出す ★★★
-        console.error("LIFFの初期化またはプロフィール取得に失敗しました:", error);
-
-        let errorMessage = "不明なエラー";
-        if (error instanceof Error) {
-          errorMessage = error.message;
-        } else {
-          try { errorMessage = JSON.stringify(error); }
-          catch (e) { errorMessage = String(e); }
-        }
-
-        // このアラートが表示されるはずです
-        alert(`LIFFの初期化に失敗しました: ${errorMessage}`);
-        setLiffMessage("LIFFの初期化に失敗。"); // Keep existing message update
       }
-      // ★★★ ここまで ★★★
     };
     initializeLiff();
   }, []);
@@ -181,13 +150,20 @@ export default function AikaFormPage() {
             setAiComment(comment);
             setViewState("result");
 
-          } catch (err: any) { // Catch for API calls
+          } catch (err: unknown) { // Catch for API calls
             console.error("Error during post-upload API calls:", err);
-            const errorMessage = JSON.stringify(
-              err.response?.data || err.message || err,
-              null,
-              2
-            );
+            let errorMessage = "An unknown error occurred";
+            if (axios.isAxiosError(err)) {
+              errorMessage = JSON.stringify(err.response?.data || err.message, null, 2);
+            } else if (err instanceof Error) {
+              errorMessage = err.message;
+            } else {
+              try {
+                errorMessage = JSON.stringify(err);
+              } catch {
+                errorMessage = String(err);
+              }
+            }
             alert(`アップロード後にエラーが発生しました:\n\n${errorMessage}`);
             setViewState("form");
           } finally {
@@ -195,7 +171,7 @@ export default function AikaFormPage() {
           }
         }
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("A fatal error occurred in the upload process:", error);
       let errorMessage = "An unknown error occurred";
       if (error instanceof Error) {

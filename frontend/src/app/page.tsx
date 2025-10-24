@@ -8,6 +8,20 @@ import { storage } from "@/lib/firebase";
 
 import liff from "@line/liff";
 
+const getMimeType = (fileName: string): string => {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+  if (!extension) return 'application/octet-stream';
+  const mimeTypes: { [key: string]: string } = {
+    'mp4': 'video/mp4',
+    'mov': 'video/quicktime',
+    'avi': 'video/x-msvideo',
+    'mkv': 'video/x-matroska',
+    'wmv': 'video/x-ms-wmv',
+    'webm': 'video/webm',
+  };
+  return mimeTypes[extension] || 'application/octet-stream';
+};
+
 type ViewState = "form" | "analyzing" | "result";
 type AIPersonality = "default" | "fun" | "pro";
 
@@ -84,15 +98,16 @@ export default function AikaFormPage() {
   };
 
   const handleUpload = async () => {
-    console.log("handleUpload function executed.");
+    console.log("Upload start: Checking file and lineId...");
     try {
       if (!file) {
         alert("まず動画ファイルを選択してください。");
+        console.error("Guard triggered: File not selected.");
         return;
       }
-      // Add upload guard for lineId
       if (!lineId) {
         alert("LINE認証が完了していません。ページを再読み込みするか、LINEアプリ内で開いてください。");
+        console.error("Guard triggered: lineId is null.");
         setViewState("form");
         setUploading(false);
         return;
@@ -103,80 +118,104 @@ export default function AikaFormPage() {
       setViewState("analyzing");
 
       console.log(`Step 1: LINE ID obtained: ${lineId}. Creating Firebase Storage reference...`);
+      console.log(`File details: name=${file.name}, size=${file.size}, type=${file.type}`);
 
       const bucketName = "aika-storage-bucket2";
-      const fileName = `${Date.now()}_${file.name}`;
-      const storageRef = ref(storage, `users/${lineId}/videos/${fileName}`); // Path changed to use lineId
-      console.log(`Step 2: Created reference (path: ${storageRef.fullPath}). Starting upload task...`);
-
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on('state_changed',
-        (snapshot: UploadTaskSnapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log(`Upload is ${progress}% done`);
-          setUploadProgress(Math.round(progress));
-        },
-        (error) => {
-          console.error("Upload task failed:", error);
-          alert(`アップロードに失敗しました: ${error.code} - ${error.message}`);
-          setViewState("form");
-          setUploading(false);
-        },
-        async () => { // on success
-          setUploadProgress(100);
-          try {
-            console.log("Step 4: Upload to GCS complete. Calling analysis API...");
-            const gcsUri = `gs://${bucketName}/videos/${fileName}`;
-
-            const analysisResponse = await axios.post("/api/analyze-video", {
-              gcsUri: gcsUri,
-              idolFighterName,
-              liffUserId: lineId, // Use lineId from state
-              theme: theme,
-            });
-            console.log("Step 5: Analysis API call successful. Saving to spreadsheet...");
-
-            const { power_level, comment } = analysisResponse.data;
-
-            await axios.post("/api/spreadsheet", {
-              userName,
-              theme,
-              requests,
-              videoUrl: gcsUri, // Using gcsUri as videoUrl
-              fileName: fileName,
-              fileType: file.type,
-              fileSize: file.size,
-              powerLevel: power_level,
-              aiComment: comment,
-            });
-            console.log("Step 6: Spreadsheet save successful. Displaying results.");
-            
-            setPowerLevel(power_level);
-            setAiComment(comment);
-            setViewState("result");
-
-          } catch (err: unknown) { // Catch for API calls
-            console.error("Error during post-upload API calls:", err);
-            let errorMessage = "An unknown error occurred";
-            if (axios.isAxiosError(err)) {
-              errorMessage = JSON.stringify(err.response?.data || err.message, null, 2);
-            } else if (err instanceof Error) {
-              errorMessage = err.message;
-            } else {
-              try {
-                errorMessage = JSON.stringify(err);
-              } catch {
-                errorMessage = String(err);
-              }
-            }
-            alert(`アップロード後にエラーが発生しました:\n\n${errorMessage}`);
-            setViewState("form");
-          } finally {
-            setUploading(false);
-          }
+      const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'tmp';
+      const uniqueFileName = `${Date.now()}-${crypto.randomUUID()}.${fileExtension}`;
+      const storagePath = `users/${lineId}/videos/${uniqueFileName}`;
+      const storageRef = ref(storage, storagePath);
+      
+      let contentType = file.type || getMimeType(file.name);
+      if (contentType === 'application/octet-stream') {
+        if (fileExtension === 'mp4') {
+          contentType = 'video/mp4';
+        } else if (fileExtension === 'mov') {
+          contentType = 'video/quicktime';
         }
-      );
+      }
+      const metadata = { contentType };
+
+      console.log(`Step 2: Created reference. Starting upload task...`, { storagePath, metadata });
+
+      try {
+        const blob = new Blob([file], { type: contentType });
+        const uploadTask = uploadBytesResumable(storageRef, blob, metadata);
+
+        uploadTask.on('state_changed',
+          (snapshot: UploadTaskSnapshot) => {
+            console.log('state_changed: progress', snapshot);
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(`Upload is ${progress}% done`);
+            setUploadProgress(Math.round(progress));
+          },
+          (error) => {
+            console.error("state_changed: error", error);
+            alert(`アップロード中にエラーが発生しました: ${error.message}`);
+            setViewState("form");
+            setUploading(false);
+          },
+          async () => { // on success
+            setUploadProgress(100);
+            console.log("state_changed: complete");
+            try {
+              console.log("Step 4: Upload to GCS complete. Calling analysis API...");
+              const gcsUri = `gs://${bucketName}/videos/${uniqueFileName}`;
+
+              const analysisResponse = await axios.post("/api/analyze-video", {
+                gcsUri: gcsUri,
+                idolFighterName,
+                liffUserId: lineId,
+                theme: theme,
+              });
+              console.log("Step 5: Analysis API call successful. Saving to spreadsheet...");
+
+              const { power_level, comment } = analysisResponse.data;
+
+              await axios.post("/api/spreadsheet", {
+                userName,
+                theme,
+                requests,
+                videoUrl: gcsUri,
+                fileName: uniqueFileName,
+                fileType: contentType,
+                fileSize: file.size,
+                powerLevel: power_level,
+                aiComment: comment,
+              });
+              console.log("Step 6: Spreadsheet save successful. Displaying results.");
+              
+              setPowerLevel(power_level);
+              setAiComment(comment);
+              setViewState("result");
+
+            } catch (err: unknown) { // Catch for API calls
+              console.error("Error during post-upload API calls:", err);
+              let errorMessage = "An unknown error occurred";
+              if (axios.isAxiosError(err)) {
+                errorMessage = JSON.stringify(err.response?.data || err.message, null, 2);
+              } else if (err instanceof Error) {
+                errorMessage = err.message;
+              } else {
+                try {
+                  errorMessage = JSON.stringify(err);
+                } catch {
+                  errorMessage = String(err);
+                }
+              }
+              alert(`アップロード後にエラーが発生しました:\n\n${errorMessage}`);
+              setViewState("form");
+            } finally {
+              setUploading(false);
+            }
+          }
+        );
+      } catch (uploadError) {
+        console.error("Error starting upload task:", uploadError);
+        alert(`アップロードタスクの開始に失敗しました: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`);
+        setViewState("form");
+        setUploading(false);
+      }
     } catch (error: unknown) {
       console.error("A fatal error occurred in the upload process:", error);
       let errorMessage = "An unknown error occurred";

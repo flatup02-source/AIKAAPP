@@ -35,6 +35,7 @@ steps:
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
+      - '--timeout=600s'
     waitFor: ['push-backend'] # Wait for the image to be pushed
 
   # Deploy backend worker to Cloud Run
@@ -51,6 +52,7 @@ steps:
       - '--platform'
       - 'managed'
       - '--no-allow-unauthenticated' # Worker should not be public
+      - '--timeout=600s'
     waitFor: ['push-worker'] # Wait for the image to be pushed
 
 options:

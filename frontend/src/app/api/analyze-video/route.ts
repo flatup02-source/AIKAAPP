@@ -34,8 +34,7 @@ export async function POST(req: Request) {
       comment: "解析完了。\n\n1. 右ストレートの際に、少し顎が上がっている傾向が見られます。常に顎を引く意識を持つと、ディフェンスが安定します。\n\n2. フットワークは軽快ですが、パンチのインパクトの瞬間に足が止まると、よりパワーが拳に伝わります。\n\n3. コンビネーションの最後に左フックを返すと、相手の意識を散らすことができ、次の攻撃に繋げやすくなります。",
     };
 
-    // 意図的に少し待機時間を入れる（ローディング画面を見せるため）
-    await new Promise(resolve => setTimeout(resolve, 3000));
+
 
     return NextResponse.json(dummyResult);
 

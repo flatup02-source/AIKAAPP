@@ -21,6 +21,8 @@ export default function AikaFormPage() {
   const [requests, setRequests] = useState("");
   const [liffMessage, setLiffMessage] = useState("あなたの最強のパートナー、AI18号を起動しています…");
   const [lineId, setLineId] = useState<string | null>(null); // LIFFユーザーIDを保存するstate
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isInClient, setIsInClient] = useState(false);
   
   // ★★★ 新しい状態を追加 ★★★
   const [viewState, setViewState] = useState<ViewState>("form");
@@ -35,6 +37,9 @@ export default function AikaFormPage() {
       try {
         console.log("LIFF初期化開始:", process.env.NEXT_PUBLIC_LIFF_ID);
         await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! });
+
+        setIsInClient(liff.isInClient());
+        setIsLoggedIn(liff.isLoggedIn());
 
         if (!liff.isLoggedIn()) {
           liff.login({ redirectUri: window.location.href });
@@ -119,6 +124,7 @@ export default function AikaFormPage() {
           setUploading(false);
         },
         async () => { // on success
+          setUploadProgress(100);
           try {
             console.log("Step 4: Upload to GCS complete. Calling analysis API...");
             const gcsUri = `gs://${bucketName}/videos/${fileName}`;
@@ -294,7 +300,12 @@ export default function AikaFormPage() {
         </header>
 
         {/* Temporary UI for debugging LIFF state */}
-        {/* Removed for production */}
+        <div className="bg-yellow-100 p-4 rounded-lg text-sm text-gray-800 my-4 shadow-inner">
+          <h3 className="font-bold text-base mb-2">【デバッグ情報】</h3>
+          <p><span className="font-semibold">LINEアプリ内で実行中 (isInClient):</span> {isInClient.toString()}</p>
+          <p><span className="font-semibold">ログイン状態 (isLoggedIn):</span> {isLoggedIn.toString()}</p>
+          <p><span className="font-semibold">LINE User ID:</span> {lineId || "未取得"}</p>
+        </div>
 
         {/* ... 以降のフォーム部分は変更なし ... */}
         <main className="bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-lg space-y-8 border border-white/50">

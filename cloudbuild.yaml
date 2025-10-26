@@ -41,3 +41,6 @@ steps:
 images:
 - 'gcr.io/aikaapp-584fa/aika-backend'
 - 'gcr.io/aikaapp-584fa/aika-backend-worker'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

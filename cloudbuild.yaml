@@ -1,59 +1,43 @@
 steps:
-  # Build the main backend service
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'build-backend'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/aika-backend:latest', './backend']
+# Build and push aika-backend image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/aikaapp-584fa/aika-backend', './backend']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/aikaapp-584fa/aika-backend']
 
-  # Push the main backend service image
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'push-backend'
-    args: ['push', 'gcr.io/$PROJECT_ID/aika-backend:latest']
-    waitFor: ['build-backend']
+# Deploy aika-backend to Cloud Run
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: [
+    'run', 'deploy', 'aika-backend',
+    '--image', 'gcr.io/aikaapp-584fa/aika-backend',
+    '--region', 'asia-northeast1',
+    '--platform', 'managed',
+    '--allow-unauthenticated',
+    '--timeout=600s',
+    '--update-secrets=GOOGLE_PROJECT_ID=GOOGLE_PROJECT_ID:latest,GOOGLE_CREDENTIALS_JSON=GOOGLE_CREDENTIALS_JSON:latest'
+  ]
 
-  # Build the backend worker service
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'build-worker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/aika-backend-worker:latest', './backend-worker']
+# Build and push aika-backend-worker image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/aikaapp-584fa/aika-backend-worker', './backend-worker']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/aikaapp-584fa/aika-backend-worker']
 
-  # Push the backend worker service image
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'push-worker'
-    args: ['push', 'gcr.io/$PROJECT_ID/aika-backend-worker:latest']
-    waitFor: ['build-worker']
+# Deploy aika-backend-worker to Cloud Run
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: [
+    'run', 'deploy', 'aika-backend-worker',
+    '--image', 'gcr.io/aikaapp-584fa/aika-backend-worker',
+    '--region', 'asia-northeast1',
+    '--platform', 'managed',
+    '--allow-unauthenticated',
+    '--timeout=600s',
+    '--set-env-vars=VERTEX_AI_LOCATION=asia-northeast1',
+    '--update-secrets=GOOGLE_PROJECT_ID=GOOGLE_PROJECT_ID:latest,GOOGLE_CREDENTIALS_JSON=GOOGLE_CREDENTIALS_JSON:latest,LINE_CHANNEL_ID=LINE_CHANNEL_ID:latest,LINE_CHANNEL_SECRET=LINE_CHANNEL_SECRET:latest,LINE_CHANNEL_ACCESS_TOKEN=LINE_CHANNEL_ACCESS_TOKEN:latest,FIREBASE_ADMIN_SDK_PRIVATE_KEY=FIREBASE_ADMIN_SDK_PRIVATE_KEY:latest,FIREBASE_STORAGE_BUCKET=FIREBASE_STORAGE_BUCKET:latest,FIREBASE_CLIENT_EMAIL=FIREBASE_CLIENT_EMAIL:latest,FIREBASE_PROJECT_ID=FIREBASE_PROJECT_ID:latest,VERTEXAI_API_KEY=VertexAIAPI:latest,IMAGEKIT_PRIVATE_KEY=IMAGEKIT_PRIVATE_KEY:latest,IMAGEKIT_PUBLIC_KEY=IMAGEKIT_PUBLIC_KEY:latest,IMAGEKIT_URL_ENDPOINT=IMAGEKIT_URL_ENDPOINT:latest,NEXT_PUBLIC_GOOGLE_SHEET_ID=NEXT_PUBLIC_GOOGLE_SHEET_ID:latest'
+  ]
 
-  # Deploy main backend to Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      - 'run'
-      - 'deploy'
-      - 'aika-backend' # Service name
-      - '--image'
-      - 'gcr.io/$PROJECT_ID/aika-backend:latest'
-      - '--region'
-      - 'asia-northeast1'
-      - '--platform'
-      - 'managed'
-      - '--allow-unauthenticated'
-      - '--timeout=600s'
-    waitFor: ['push-backend'] # Wait for the image to be pushed
-
-  # Deploy backend worker to Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      - 'run'
-      - 'deploy'
-      - 'aika-backend-worker' # Service name
-      - '--image'
-      - 'gcr.io/$PROJECT_ID/aika-backend-worker:latest'
-      - '--region'
-      - 'asia-northeast1'
-      - '--platform'
-      - 'managed'
-      - '--no-allow-unauthenticated' # Worker should not be public
-      - '--timeout=600s'
-    waitFor: ['push-worker'] # Wait for the image to be pushed
-
-options:
-  logging: CLOUD_LOGGING_ONLY
+images:
+- 'gcr.io/aikaapp-584fa/aika-backend'
+- 'gcr.io/aikaapp-584fa/aika-backend-worker'

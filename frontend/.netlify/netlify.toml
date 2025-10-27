@@ -9,7 +9,7 @@ redirects = []
 origin = "default"
 package = "@netlify/plugin-nextjs"
 
-[plugins.inputs]
+  [plugins.inputs]
 
 [build]
 

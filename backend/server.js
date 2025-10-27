@@ -1,23 +1,18 @@
 // filename: server.js
 
 import express from 'express';
-import cors from 'cors';
 
 // セキュリティ: 許可するオリジンを限定
-// Netlify の本番/プレビューのURLを必ず自分の環境に合わせて設定してください。
-// 例）本番: https://your-site.netlify.app
-//     プレビュー: https://deploy-preview-*/your-site--something.netlify.app のようにパターンがあるため、必要なら正規表現ベースのチェックを使います。
 const allowedOrigins = [
-  'https://your-site.netlify.app',
-  'https://your-custom-domain.example.com',
+  'https://serene-zabaione-8c4e2a.netlify.app',
 ];
 
 // 可変なプレビューURLに対応したい場合のカスタム判定
 function isAllowedOrigin(origin) {
   if (!origin) return false;
   if (allowedOrigins.includes(origin)) return true;
-  // Netlifyプレビュー: https://deploy-preview-123--your-site.netlify.app の形式
-  const previewPattern = /^https:\/\/deploy-preview-\d+--your-site\.netlify\.app$/;
+  // Netlifyプレビュー: https://deploy-preview-123--serene-zabaione-8c4e2a.netlify.app の形式
+  const previewPattern = /^https:\/\/deploy-preview-\d+--serene-zabaione-8c4e2a\.netlify\.app$/;
   return previewPattern.test(origin);
 }
 
@@ -50,6 +45,11 @@ app.options('*', (req, res) => {
 });
 
 app.use(express.json());
+
+// Root health check for Cloud Run
+app.get('/', (req, res) => {
+  res.status(200).send('OK');
+});
 
 // 例: API ルート
 app.get('/health', (req, res) => {

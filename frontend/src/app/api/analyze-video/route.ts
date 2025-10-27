@@ -4,8 +4,13 @@ import {
 } from "@google-cloud/video-intelligence";
 import { NextResponse } from "next/server";
 
+const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || '{}');
 const videoClient = new VideoIntelligenceServiceClient({
-  projectId: process.env.GOOGLE_PROJECT_ID,
+  projectId: credentials.project_id,
+  credentials: {
+    client_email: credentials.client_email,
+    private_key: credentials.private_key,
+  }
 });
 
 export async function POST(req: Request) {

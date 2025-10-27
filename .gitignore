@@ -1,4 +1,12 @@
+# Dependencies
+/node_modules/
+
+# Lockfiles
+package-lock.json
 
 # Sensitive files
 service-account-key.json
 .env.local
+
+# macOS
+.DS_Store

@@ -3,10 +3,11 @@ import { google } from 'googleapis';
 import axios from 'axios';
 
 // Google Sheets APIの認証と設定
+const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || '{}');
 const auth = new google.auth.GoogleAuth({
   credentials: {
-    client_email: process.env.GOOGLE_CLIENT_EMAIL,
-    private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\n/g, '\n'),
+    client_email: credentials.client_email,
+    private_key: credentials.private_key,
   },
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });

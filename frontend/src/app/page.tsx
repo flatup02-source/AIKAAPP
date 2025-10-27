@@ -3,51 +3,10 @@
 import { useState, ChangeEvent, useEffect } from "react";
 import Image from "next/image";
 import axios from "axios";
-import { ref, uploadBytes } from "firebase/storage";
+import { ref, uploadBytesResumable, UploadTaskSnapshot } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 
 import liff from "@line/liff";
-
-const getMimeType = (fileName: string): string => {
-  const extension = fileName.split('.').pop()?.toLowerCase();
-  if (!extension) return 'application/octet-stream';
-  const mimeTypes: { [key: string]: string } = {
-    'mp4': 'video/mp4',
-    'mov': 'video/quicktime',
-    'avi': 'video/x-msvideo',
-    'mkv': 'video/x-matroska',
-    'wmv': 'video/x-ms-wmv',
-    'webm': 'video/webm',
-  };
-  return mimeTypes[extension] || 'application/octet-stream';
-};
-
-const validateUploadPath = (lineId: string, fileName: string): string | null => {
-  if (!lineId.startsWith("U")) {
-    return "Invalid LINE User ID. It must start with 'U'.";
-  }
-  if (!fileName.match(/\.(mp4|mov|avi|mkv|wmv|webm)$/i)) {
-    return "Invalid file type. Only video files are allowed.";
-  }
-  return null;
-};
-
-const getUploadMetadata = (lineId: string, file: File) => {
-  const bucketName = "aika-storage-bucket2";
-  const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'tmp';
-  const uniqueFileName = `${Date.now()}-${crypto.randomUUID()}.${fileExtension}`;
-  const storagePath = `users/${lineId}/videos/${uniqueFileName}`;
-
-  let contentType = file.type || getMimeType(file.name);
-  if (contentType === 'application/octet-stream') {
-    if (fileExtension === 'mp4') {
-      contentType = 'video/mp4';
-    } else if (fileExtension === 'mov') {
-      contentType = 'video/quicktime';
-    }
-  }
-  return { storagePath, contentType, uniqueFileName, bucketName };
-};
 
 type ViewState = "form" | "analyzing" | "result";
 type AIPersonality = "default" | "fun" | "pro";
@@ -56,18 +15,18 @@ export default function AikaFormPage() {
 
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [userName, setUserName] = useState("");
   const [theme, setTheme] = useState("");
   const [requests, setRequests] = useState("");
   const [liffMessage, setLiffMessage] = useState("あなたの最強のパートナー、AI18号を起動しています…");
-  const [lineId, setLineId] = useState<string | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isInClient, setIsInClient] = useState(false);
+  const [lineId, setLineId] = useState<string | null>(null); // LIFFユーザーIDを保存するstate
   
+  // ★★★ 新しい状態を追加 ★★★
   const [viewState, setViewState] = useState<ViewState>("form");
   const [powerLevel, setPowerLevel] = useState<number | null>(null);
   const [aiComment, setAiComment] = useState("");
-  const [idolFighterName] = useState("那須川天心");
+  const [idolFighterName] = useState("那須川天心"); // デフォルトの憧れのファイター
   const [aiPersonality, setAiPersonality] = useState<AIPersonality>("default");
   const [aiIntroduction, setAiIntroduction] = useState("");
 
@@ -76,9 +35,6 @@ export default function AikaFormPage() {
       try {
         console.log("LIFF初期化開始:", process.env.NEXT_PUBLIC_LIFF_ID);
         await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! });
-
-        setIsInClient(liff.isInClient());
-        setIsLoggedIn(liff.isLoggedIn());
 
         if (!liff.isLoggedIn()) {
           liff.login({ redirectUri: window.location.href });
@@ -90,13 +46,9 @@ export default function AikaFormPage() {
         setUserName(profile.displayName);
         setLineId(profile.userId);
 
-      } catch (err: unknown) {
+      } catch (err) {
         console.error("LIFF初期化エラー:", err);
-        if (err instanceof Error) {
-          alert(`LIFF初期化に失敗しました: ${err.message}。LINEアプリ内で開いてください。`);
-        } else {
-          alert("LIFF初期化に失敗しました。LINEアプリ内で開いてください。");
-        }
+        alert("LIFF初期化に失敗しました。LINEアプリ内で開いてください。");
       }
     };
     initializeLiff();
@@ -118,97 +70,113 @@ export default function AikaFormPage() {
       setAiIntroduction("覚悟はいいか。プロの世界は甘くない。私からの要求は厳しくなるが、ついてくるなら世界レベルの視点を授けよう。始めようか。");
     } else {
       setAiPersonality("default");
-      setAiIntroduction("");
+      setAiIntroduction(""); // 他のテーマでは特別な紹介文はなし
     }
   };
 
   const handleUpload = async () => {
-    if (!file || !lineId) {
-      alert("File or LINE ID missing.");
-      return;
-    }
-
-    const validationError = validateUploadPath(lineId, file.name);
-    if (validationError) {
-      alert(`[Validation Error] ${validationError}`);
-      return;
-    }
-
-    setUploading(true);
-    setViewState("analyzing");
-
-    const { storagePath, contentType, uniqueFileName, bucketName } = getUploadMetadata(lineId, file);
-    console.log("シンプルな uploadBytes でアップロードを開始します...", { storagePath, contentType, size: file.size });
-
+    console.log("handleUpload function executed.");
     try {
-      const storageRef = ref(storage, storagePath);
-      const metadata = { contentType };
-      const blob = new Blob([file], { type: file.type });
+      if (!file) {
+        alert("まず動画ファイルを選択してください。");
+        return;
+      }
+      // Add upload guard for lineId
+      if (!lineId) {
+        alert("LINE認証が完了していません。ページを再読み込みするか、LINEアプリ内で開いてください。");
+        setViewState("form");
+        setUploading(false);
+        return;
+      }
 
-      await uploadBytes(storageRef, blob, metadata);
-      
-      console.log('アップロードが完了しました！');
-      await handleAnalysis(storagePath, uniqueFileName, bucketName, file.type, file.size);
+      setUploading(true);
+      setUploadProgress(0);
+      setViewState("analyzing");
 
+      console.log(`Step 1: LINE ID obtained: ${lineId}. Creating Firebase Storage reference...`);
+
+      const bucketName = "aika-storage-bucket2";
+      const fileName = `${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, `users/${lineId}/videos/${fileName}`); // Path changed to use lineId
+      console.log(`Step 2: Created reference (path: ${storageRef.fullPath}). Starting upload task...`);
+
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on('state_changed',
+        (snapshot: UploadTaskSnapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log(`Upload is ${progress}% done`);
+          setUploadProgress(Math.round(progress));
+        },
+        (error) => {
+          console.error("Upload task failed:", error);
+          alert(`アップロードに失敗しました: ${error.code} - ${error.message}`);
+          setViewState("form");
+          setUploading(false);
+        },
+        async () => { // on success
+          try {
+            console.log("Step 4: Upload to GCS complete. Calling analysis API...");
+            const gcsUri = `gs://${bucketName}/videos/${fileName}`;
+
+            const analysisResponse = await axios.post("/api/analyze-video", {
+              gcsUri: gcsUri,
+              idolFighterName,
+              liffUserId: lineId, // Use lineId from state
+              theme: theme,
+            });
+            console.log("Step 5: Analysis API call successful. Saving to spreadsheet...");
+
+            const { power_level, comment } = analysisResponse.data;
+
+            await axios.post("/api/spreadsheet", {
+              userName,
+              theme,
+              requests,
+              videoUrl: gcsUri, // Using gcsUri as videoUrl
+              fileName: fileName,
+              fileType: file.type,
+              fileSize: file.size,
+              powerLevel: power_level,
+              aiComment: comment,
+            });
+            console.log("Step 6: Spreadsheet save successful. Displaying results.");
+            
+            setPowerLevel(power_level);
+            setAiComment(comment);
+            setViewState("result");
+
+          } catch (err: any) { // Catch for API calls
+            console.error("Error during post-upload API calls:", err);
+            const errorMessage = JSON.stringify(
+              err.response?.data || err.message || err,
+              null,
+              2
+            );
+            alert(`アップロード後にエラーが発生しました:\n\n${errorMessage}`);
+            setViewState("form");
+          } finally {
+            setUploading(false);
+          }
+        }
+      );
     } catch (error: any) {
-      console.error("アップロードに失敗しました", error);
-      alert(`アップロードに失敗しました: ${error.message}`);
+      console.error("A fatal error occurred in the upload process:", error);
+      let errorMessage = "An unknown error occurred";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else {
+        try {
+          errorMessage = JSON.stringify(error);
+        } catch (e) {
+          errorMessage = String(error);
+        }
+      }
+      alert(`致命的なエラーが発生しました: ${errorMessage}`);
       setViewState("form");
-    } finally {
       setUploading(false);
     }
   };
-
-  async function handleAnalysis(storagePath: string, uniqueFileName: string, bucketName: string, fileType: string, fileSize: number) {
-    try {
-      console.log("Step 4: Upload to GCS complete. Calling analysis API...");
-      const gcsUri = `gs://${bucketName}/videos/${uniqueFileName}`;
-
-      const analysisResponse = await axios.post("/api/analyze-video", {
-        gcsUri: gcsUri,
-        idolFighterName,
-        liffUserId: lineId,
-        theme: theme,
-      });
-      console.log("Step 5: Analysis API call successful. Saving to spreadsheet...");
-
-      const { power_level, comment } = analysisResponse.data;
-
-      await axios.post("/api/spreadsheet", {
-        userName,
-        theme,
-        requests,
-        videoUrl: gcsUri,
-        fileName: uniqueFileName,
-        fileType: fileType,
-        fileSize: fileSize,
-        powerLevel: power_level,
-        aiComment: comment,
-      });
-      console.log("Step 6: Spreadsheet save successful. Displaying results.");
-
-      setPowerLevel(power_level);
-      setAiComment(comment);
-      setViewState("result");
-
-    } catch (err: unknown) {
-      console.error("Error during post-upload API calls:", err);
-      let errorMessage = "An unknown error occurred";
-      if (axios.isAxiosError(err)) {
-        errorMessage = JSON.stringify(err.response?.data || err.message, null, 2);
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
-      } else {
-        try {
-          errorMessage = JSON.stringify(err);
-        } catch {
-          errorMessage = String(err);
-        }
-      }
-      alert(`アップロード後にエラーが発生しました:\n\n${errorMessage}`);
-      setViewState("form");
-    }
-  }
 
   const themes = [
     "より美しいフォームを手に入れたい",
@@ -218,17 +186,30 @@ export default function AikaFormPage() {
     "プロになりたい",
     "試合に出てみたい",
   ];
+  
+  // ★★★ ここから、画面表示の切り替え処理を追加 ★★★
 
   if (viewState === "analyzing") {
     return (
       <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white p-4">
           <div className="text-center">
             <h1 className="text-3xl font-bold mb-4">集中…今、君の未来を計算している…</h1>
-            <div className="relative w-64 h-64 flex items-center justify-center">
-                <svg className="animate-spin h-24 w-24 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <div className="relative w-64 h-64">
+                <svg className="w-full h-full" viewBox="0 0 100 100">
+                    <circle className="text-gray-700" strokeWidth="10" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
+                    <circle 
+                        className="text-blue-500"
+                        strokeWidth="10"
+                        strokeDasharray={2 * Math.PI * 45}
+                        strokeDashoffset={(2 * Math.PI * 45) * (1 - uploadProgress / 100)}
+                        strokeLinecap="round"
+                        stroke="currentColor"
+                        fill="transparent"
+                        r="45" cx="50" cy="50"
+                        style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}
+                    />
                 </svg>
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold">{uploadProgress}%</span>
             </div>
         </div>
       </div>
@@ -277,7 +258,7 @@ export default function AikaFormPage() {
     );
   }
 
-  return (
+  return ( // viewStateが'form'の場合の元のフォーム
     <div 
       className="min-h-screen text-gray-800 flex justify-center py-12 px-4"
       style={{
@@ -301,13 +282,10 @@ export default function AikaFormPage() {
           </p>
         </header>
 
-        <div className="bg-yellow-100 p-4 rounded-lg text-sm text-gray-800 my-4 shadow-inner">
-          <h3 className="font-bold text-base mb-2">【デバッグ情報】</h3>
-          <p><span className="font-semibold">LINEアプリ内で実行中 (isInClient):</span> {isInClient.toString()}</p>
-          <p><span className="font-semibold">ログイン状態 (isLoggedIn):</span> {isLoggedIn.toString()}</p>
-          <p><span className="font-semibold">LINE User ID:</span> {lineId || "未取得"}</p>
-        </div>
+        {/* Temporary UI for debugging LIFF state */}
+        {/* Removed for production */}
 
+        {/* ... 以降のフォーム部分は変更なし ... */}
         <main className="bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-lg space-y-8 border border-white/50">
           <div className="space-y-6">
             <div>
@@ -336,14 +314,17 @@ export default function AikaFormPage() {
             </div>
             <div>
               <p className="text-sm text-gray-600 mb-2">準備ができたら、あなたの「今」の動きを見せて。完璧じゃなくて大丈夫。あなたの動きの中に眠る「未来の強さ」の原石を、私が見つけ出すから。さあ、撮影ボタンを押して！</p>
+{/* ===== アップロードUI ここから ===== */}
 <div className="w-full max-w-md mx-auto p-4 bg-slate-100 rounded-2xl shadow-inner space-y-4">
 
+  {/* ファイルが選択されている場合にファイル名を表示 */}
   {file && (
     <div className="p-3 bg-white rounded-lg text-center">
       <p className="text-gray-800 font-medium truncate">{file.name}</p>
     </div>
   )}
 
+  {/* メインの実行ボタン */}
   <button
     onClick={handleUpload}
     disabled={!file || uploading}
@@ -353,6 +334,7 @@ export default function AikaFormPage() {
     18号、頼んだ！
   </button>
 
+  {/* ファイル選択ボタン */}
   <label className="block w-full text-center text-sm text-gray-600 bg-white
                    py-2 px-4 rounded-xl cursor-pointer hover:bg-gray-200 transition-colors">
     {file ? '動画を変更する' : '動画を選択する'}
@@ -364,6 +346,7 @@ export default function AikaFormPage() {
     />
   </label>
 </div>
+{/* ===== アップロードUI ここまで ===== */}
             </div>
           </div>
         </main>
@@ -385,3 +368,4 @@ export default function AikaFormPage() {
     </div>
   );
 }
+q

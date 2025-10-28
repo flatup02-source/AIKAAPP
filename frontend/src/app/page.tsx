@@ -9,6 +9,7 @@ import FileUploader from "../components/FileUploader";
 type ViewState = "form" | "analyzing" | "result";
 type AIPersonality = "default" | "fun" | "pro";
 
+export default function Page() {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);

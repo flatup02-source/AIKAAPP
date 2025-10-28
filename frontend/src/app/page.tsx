@@ -11,7 +11,6 @@ import { uploadUserVideo } from "../lib/upload";
 type ViewState = "form" | "analyzing" | "result";
 type AIPersonality = "default" | "fun" | "pro";
 
-export default function AikaFormPage() {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -38,14 +37,6 @@ export default function AikaFormPage() {
   const [aiPersonality, setAiPersonality] =
     useState<AIPersonality>("default");
   const [aiIntroduction, setAiIntroduction] = useState("");
-
-  
-
-  // ... (rest of the imports)
-
-  
-
-  export default function AikaFormPage() {
 
     // ... (rest of the state declarations)
 

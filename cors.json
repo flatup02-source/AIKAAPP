@@ -1,0 +1,11 @@
+[
+  {
+    "origin": [
+      "https://serene-zabaione-8c4e2a.netlify.app",
+      "http://localhost:3000"
+    ],
+    "method": ["GET", "PUT", "HEAD", "OPTIONS"],
+    "responseHeader": ["Content-Type", "Content-Length", "x-goog-meta-*", "x-goog-resumable", "Authorization"],
+    "maxAgeSeconds": 3600
+  }
+]

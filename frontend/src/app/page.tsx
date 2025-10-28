@@ -155,7 +155,7 @@ export default function AikaFormPage() {
         
         {/* FileUploader コンポーネントを使用 */}
         {/* FileUploaderは onFileSelect という props を持つと仮定 */}
-        <FileUploader onFileSelect={setFile} />
+        <FileUploader onFileSelect={setFile} onUploadAttempt={handleUpload} isUploading={isUploading} />
 
         <div className="mt-4">
           <label htmlFor="theme" className="block text-sm font-medium text-gray-700">テーマ</label>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import liff from "@line/liff";
 import axios from "axios";
 import { signInWithLine } from "@/lib/auth/line";
+import { initializeFirebaseClient } from "@/lib/firebase";
 // signInWithLine と uploadUserVideo は、あなたのプロジェクトの lib フォルダ内の実際のファイルパスに合わせて修正してください
 // import { signInWithLine } from "../lib/auth"; 
 // import { uploadUserVideo } from "../lib/upload";
@@ -40,6 +41,7 @@ export default function AikaFormPage() {
   
   // --- useEffect for LIFF Initialization ---
   useEffect(() => {
+    initializeFirebaseClient();
     const initializeLiff = async () => {
       try {
         // NEXT_PUBLIC_LIFF_ID はあなたの .env.local ファイルで定義してください

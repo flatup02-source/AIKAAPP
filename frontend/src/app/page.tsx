@@ -5,6 +5,8 @@ import Image from "next/image";
 import axios from "axios";
 import liff from "@line/liff";
 import FileUploader from "../components/FileUploader";
+import { signInWithLine } from "../lib/auth";
+import { uploadUserVideo } from "../lib/upload";
 
 type ViewState = "form" | "analyzing" | "result";
 type AIPersonality = "default" | "fun" | "pro";
@@ -36,10 +38,6 @@ export default function AikaFormPage() {
   const [aiPersonality, setAiPersonality] =
     useState<AIPersonality>("default");
   const [aiIntroduction, setAiIntroduction] = useState("");
-
-  import { signInWithLine } from "../lib/auth";
-
-  import { uploadUserVideo } from "../lib/upload";
 
   
 

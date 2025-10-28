@@ -30,186 +30,139 @@ export default function AikaFormPage() {
     useState<AIPersonality>("default");
   const [aiIntroduction, setAiIntroduction] = useState("");
 
-  useEffect(() => {
-    const initializeLiff = async () => {
-      try {
-        console.log("LIFF初期化開始:", process.env.NEXT_PUBLIC_LIFF_ID);
-        await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! });
+  import { signInWithLine } from "../lib/auth";
 
-        if (!liff.isLoggedIn()) {
-          liff.login({ redirectUri: window.location.href });
-          return;
-        }
+  import { uploadUserVideo } from "../lib/upload";
 
-        const profile = await liff.getProfile();
-        console.log("ログイン成功:", profile.displayName);
-        setUserName(profile.displayName);
-        setLineId(profile.userId);
-      } catch (err) {
-        console.error("LIFF初期化エラー:", err);
-        alert("LIFF初期化に失敗しました。LINEアプリ内で開いてください。");
-      }
-    };
-    initializeLiff();
-  }, []);
+  
 
-  const handleThemeSelect = (selectedTheme: string) => {
-    setTheme(selectedTheme);
-    if (selectedTheme === "まずは楽しむことを重視したい") {
-      setAiPersonality("fun");
-      setAiIntroduction(
-        "了解！楽しむのが一番だよね！理屈は抜きにして、とにかくカッコよく動けるように、私が最高の相棒になるよ！よろしく！"
-      );
-    } else if (selectedTheme === "プロになりたい") {
-      setAiPersonality("pro");
-      setAiIntroduction(
-        "覚悟はいいか。プロの世界は甘くない。私からの要求は厳しくなるが、ついてくるなら世界レベルの視点を授けよう。始めようか。"
-      );
-    } else {
-      setAiPersonality("default");
-      setAiIntroduction(""); // 他のテーマでは特別な紹介文はなし
-    }
-  };
+  // ... (rest of the imports)
 
-  const handleUpload = async (selectedFile: File) => {
-    console.log("handleUpload function executed.");
-    if (!selectedFile) {
-      alert("まず動画ファイルを選択してください。");
-      return;
-    }
-    if (!lineId) {
-      alert(
-        "LINE認証が完了していません。ページを再読み込みするか、LINEアプリ内で開いてください。"
-      );
-      return;
-    }
+  
 
-    setFile(selectedFile);
-    setUploading(true);
-    setUploadProgress(0);
-    setViewState("analyzing");
+  export default function AikaFormPage() {
 
-    try {
-      console.log("Step 1: Getting signed URL for upload...");
-      const fileName = `users/${lineId}/videos/${Date.now()}_${
-        selectedFile.name
-      }`;
-      const response = await axios.post("/api/imagekit-sign", {
-        fileName: fileName,
-        contentType: selectedFile.type,
-        action: "write",
-      });
-      const { signedUrl } = response.data;
-      console.log("Step 2: Signed URL obtained. Starting upload...");
+    // ... (rest of the state declarations)
 
-      const xhr = new XMLHttpRequest();
-      xhr.open("PUT", signedUrl, true);
-      xhr.setRequestHeader("Content-Type", selectedFile.type);
+  
 
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const progress = (event.loaded / event.total) * 100;
-          console.log(`Upload is ${progress}% done`);
-          setUploadProgress(Math.round(progress));
-        }
-      };
+    useEffect(() => {
 
-      xhr.onload = async () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            console.log(
-              "Step 4: Upload to GCS complete. Calling analysis API..."
-            );
-            const bucketName = process.env.NEXT_PUBLIC_GCS_BUCKET_NAME;
-            const gcsUri = `gs://${bucketName}/${fileName}`;
-            const publicUrl = `https://storage.googleapis.com/${bucketName}/${fileName}`;
+      const initializeLiff = async () => {
 
-            const analysisResponse = await axios.post("/api/analyze-video", {
-              gcsUri: gcsUri,
-              idolFighterName,
-              liffUserId: lineId,
-              theme: theme,
-            });
-            console.log(
-              "Step 5: Analysis API call successful. Saving to spreadsheet..."
-            );
-
-            const { power_level, comment } = analysisResponse.data;
-
-            await axios.post("/api/spreadsheet", {
-              userName,
-              theme,
-              requests,
-              videoUrl: publicUrl, // Use publicUrl
-              fileName: selectedFile.name,
-              fileType: selectedFile.type,
-              fileSize: selectedFile.size,
-              powerLevel: power_level,
-              aiComment: comment,
-            });
-            console.log(
-              "Step 6: Spreadsheet save successful. Displaying results."
-            );
-
-            setPowerLevel(power_level);
-            setAiComment(comment);
-            setViewState("result");
-          } catch (err: any) {
-            console.error("Error during post-upload API calls:", err);
-            const errorMessage = JSON.stringify(
-              err.response?.data || err.message || err,
-              null,
-              2
-            );
-            alert(`アップロード後にエラーが発生しました:\n\n${errorMessage}`);
-            setViewState("form");
-          } finally {
-            setUploading(false);
-          }
-        } else {
-          console.error("Upload failed:", xhr.statusText);
-          let errorMessage = `アップロードに失敗しました。ステータス: ${xhr.status}`;
-          if (xhr.status === 403) {
-            errorMessage +=
-              "\n署名URLの期限が切れたか、Content-Typeが一致しない可能性があります。";
-          } else if (xhr.status === 0) {
-            errorMessage += "\nCORS設定を確認してください。";
-          }
-          alert(errorMessage);
-          setViewState("form");
-          setUploading(false);
-        }
-      };
-
-      xhr.onerror = () => {
-        console.error("Upload failed:", xhr.statusText);
-        alert("アップロード中にネットワークエラーが発生しました。");
-        setViewState("form");
-        setUploading(false);
-      };
-
-      xhr.send(selectedFile);
-    } catch (error: any) {
-      console.error("A fatal error occurred in the upload process:", error);
-      let errorMessage = "An unknown error occurred";
-      if (error.response) {
-        errorMessage = `署名URLの取得に失敗しました: ${JSON.stringify(
-          error.response.data
-        )}`;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      } else {
         try {
-          errorMessage = JSON.stringify(error);
-        } catch (e) {
-          errorMessage = String(error);
+
+          console.log("LIFF初期化開始:", process.env.NEXT_PUBLIC_LIFF_ID);
+
+          await liff.init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID! });
+
+  
+
+          if (!liff.isLoggedIn()) {
+
+            liff.login({ redirectUri: window.location.href });
+
+            return;
+
+          }
+
+  
+
+          const profile = await liff.getProfile();
+
+          console.log("ログイン成功:", profile.displayName);
+
+          setUserName(profile.displayName);
+
+          setLineId(profile.userId);
+
+  
+
+          const idToken = liff.getIDToken();
+
+          if (idToken) {
+
+            const user = await signInWithLine(idToken);
+
+            console.log("Firebase Auth successful:", user);
+
+          }
+
+  
+
+        } catch (err) {
+
+          console.error("LIFF初期化エラー:", err);
+
+          alert("LIFF初期化に失敗しました。LINEアプリ内で開いてください。");
+
         }
+
+      };
+
+      initializeLiff();
+
+    }, []);
+
+  
+
+    // ... (handleThemeSelect function)
+
+  
+
+    const handleUpload = async (selectedFile: File) => {
+
+      console.log("handleUpload function executed.");
+
+      if (!selectedFile) {
+
+        alert("まず動画ファイルを選択してください。");
+
+        return;
+
       }
-      alert(`致命的なエラーが発生しました: ${errorMessage}`);
-      setViewState("form");
-      setUploading(false);
-    }
-  };
+
+  
+
+      setUploading(true);
+
+      setUploadProgress(0);
+
+      setViewState("analyzing");
+
+  
+
+      try {
+
+        const uploadPath = await uploadUserVideo(selectedFile);
+
+        console.log("Upload successful, path:", uploadPath);
+
+  
+
+        // ... (rest of the post-upload logic)
+
+  
+
+      } catch (error) {
+
+        console.error("Upload failed:", error);
+
+        alert("アップロードに失敗しました。");
+
+        setViewState("form");
+
+        setUploading(false);
+
+      }
+
+    };
+
+  
+
+    // ... (rest of the component)
+
+  
 
   const themes = [
     "より美しいフォームを手に入れたい",

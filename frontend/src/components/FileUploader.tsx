@@ -4,15 +4,19 @@ import { LogLevel } from '../types';
 interface FileUploaderProps {
   onUploadAttempt: (file: File) => void;
   isUploading: boolean;
+  onFileSelect: (file: File | null) => void;
 }
 
-const FileUploader: React.FC<FileUploaderProps> = ({ onUploadAttempt, isUploading }) => {
+const FileUploader: React.FC<FileUploaderProps> = ({ onUploadAttempt, isUploading, onFileSelect }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setSelectedFile(event.target.files[0]);
+      onFileSelect(event.target.files[0]); // Call onFileSelect here
+    } else {
+      onFileSelect(null); // Call onFileSelect with null if no file is selected
     }
   };
 

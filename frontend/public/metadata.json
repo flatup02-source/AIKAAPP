@@ -1,0 +1,5 @@
+{
+  "name": "GCS CORS デバッガー",
+  "description": "LINE LIFFアプリ内からのGoogle Cloud Storageへの直接アップロードをシミュレートし、CORSエラーの原因を特定するための診断ツールです。",
+  "requestFramePermissions": []
+}

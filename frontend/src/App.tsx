@@ -13,6 +13,7 @@ const App: React.FC = () => {
       message: 'デバッガーの準備ができました。動画ファイルを選択し、「アップロードを試行」ボタンを押してください。',
     },
   ]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [postUploadStatus, setPostUploadStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [postUploadPayload, setPostUploadPayload] = useState<object>({});
@@ -107,7 +108,7 @@ const App: React.FC = () => {
         </p>
       </div>
 
-      <FileUploader onUploadAttempt={handleUploadAttempt} isUploading={isUploading} />
+      <FileUploader onUploadAttempt={handleUploadAttempt} isUploading={isUploading} onFileSelect={setSelectedFile} />
 
       {postUploadStatus !== 'idle' && (
         <PostUploadInfo 

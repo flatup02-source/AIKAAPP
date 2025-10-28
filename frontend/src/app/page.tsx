@@ -21,6 +21,13 @@ export default function AikaFormPage() {
   );
   const [lineId, setLineId] = useState<string | null>(null); // LIFFユーザーIDを保存するstate
 
+  // Debugging states
+  const [debugLineId, setDebugLineId] = useState<string>("");
+  const [debugUserName, setDebugUserName] = useState<string>("");
+  const [debugVideoUrl, setDebugVideoUrl] = useState<string>("");
+  const [debugTheme, setDebugTheme] = useState<string>("");
+  const [debugRequests, setDebugRequests] = useState<string>("");
+
   // ★★★ 新しい状態を追加 ★★★
   const [viewState, setViewState] = useState<ViewState>("form");
   const [powerLevel, setPowerLevel] = useState<number | null>(null);
@@ -134,13 +141,87 @@ export default function AikaFormPage() {
 
       try {
 
-        const uploadPath = await uploadUserVideo(selectedFile);
+                const uploadPath = await uploadUserVideo(selectedFile);
 
-        console.log("Upload successful, path:", uploadPath);
+                console.log("Upload successful, path:", uploadPath);
 
-  
+        
 
-        // ... (rest of the post-upload logic)
+                // スプレッドシートAPIへの連携
+
+                try {
+
+                  const payload = {
+
+                    userId: debugLineId || lineId, // デバッグ用IDがあればそれを使う、なければLIFFのID
+
+                    userName: debugUserName || userName, // デバッグ用ユーザー名があればそれを使う、なければLIFFのユーザー名
+
+                    videoUrl: debugVideoUrl || uploadPath, // デバッグ用URLがあればそれを使う、なければアップロードパス
+
+                    theme: debugTheme || theme, // デバッグ用テーマがあればそれを使う、なければ選択されたテーマ
+
+                    requests: debugRequests || requests, // デバッグ用リクエストがあればそれを使う、なければ入力されたリクエスト
+
+                    timestamp: new Date().toISOString(),
+
+                  };
+
+                  console.log("Sending payload to /api/spreadsheet:", payload);
+
+                  const spreadsheetResponse = await axios.post(
+
+                    "/api/spreadsheet",
+
+                    payload
+
+                  );
+
+                  console.log("Spreadsheet API response:", spreadsheetResponse.data);
+
+        
+
+                  // AI分析APIへの連携
+
+                  const analyzeResponse = await axios.post("/api/analyze-video", {
+
+                    videoUrl: debugVideoUrl || uploadPath,
+
+                    userId: debugLineId || lineId,
+
+                    userName: debugUserName || userName,
+
+                    theme: debugTheme || theme,
+
+                    requests: debugRequests || requests,
+
+                    aiPersonality: aiPersonality,
+
+                  });
+
+                  console.log("Analyze API response:", analyzeResponse.data);
+
+        
+
+                  setPowerLevel(analyzeResponse.data.powerLevel);
+
+                  setAiComment(analyzeResponse.data.comment);
+
+                  setViewState("result");
+
+                } catch (apiError) {
+
+                  console.error("Error during post-upload API calls:", apiError);
+
+                  alert(
+
+                    "動画の分析またはスプレッドシートへの記録に失敗しました。開発者ツールで詳細を確認してください。"
+
+                  );
+
+                  setViewState("form");
+
+                }
 
   
 
@@ -301,28 +382,14 @@ export default function AikaFormPage() {
         {/* ... 以降のフォーム部分は変更なし ... */}
         <main className="bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-lg space-y-8 border border-white/50">
           <div className="space-y-6">
-            <div>
-              <label
-                htmlFor="userName"
-                className="block text-sm font-bold text-gray-700 mb-2"
-              >
-                お名前（LINEでの表示名）
-              </label>
-              <input
-                type="text"
-                id="userName"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                placeholder="LIFFから自動取得中..."
-                className="w-full bg-white/50 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200"
-                readOnly
-              />
-            </div>
-            <div>
-              <div className="text-center mb-4">
-                <p className="font-bold text-gray-800">
-                  {userName}さん、こんにちは！一緒に頑張りましょう！
-                </p>
+            <div>\n              <label\n                htmlFor=\"userName\"\n                className=\"block text-sm font-bold text-gray-700 mb-2\"\n              >\n                お名前（LINEでの表示名）\n              </label>\n              <input\n                type=\"text\"\n                id=\"userName\"\n                value={userName}\n                onChange={(e) => setUserName(e.target.value)}\n                placeholder=\"LIFFから自動取得中...\"\n                className=\"w-full bg-white/50 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200\"\n                readOnly\n              />\n            </div>\n\n            {/* Debugging Section */}\n            <div className=\"mt-8 p-6 bg-yellow-50 border border-yellow-200 rounded-lg shadow-inner\">\n              <h3 className=\"text-lg font-bold text-yellow-800 mb-4\">\n                デバッグ用入力 (開発者向け)\n              </h3>\n              <div className=\"space-y-4\">\n                <div>\n                  <label\n                    htmlFor=\"debugLineId\"\n                    className=\"block text-sm font-medium text-gray-700 mb-1\"\n                  >\n                    LINE ID (デバッグ用)\n                  </label>\n                  <input\n                    type=\"text\"\n                    id=\"debugLineId\"\n                    value={debugLineId}\n                    onChange={(e) => setDebugLineId(e.target.value)}\n                    placeholder=\"LIFF IDを上書き\"\n                    className=\"w-full bg-white border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-yellow-500 focus:border-yellow-500\"\n                  />\n                </div>\n                <div>\n                  <label\n                    htmlFor=\"debugUserName\"\n                    className=\"block text-sm font-medium text-gray-700 mb-1\"\n                  >\n                    ユーザー名 (デバッグ用)\n                  </label>\n                  <input\n                    type=\"text\"\n                    id=\"debugUserName\"\n                    value={debugUserName}\n                    onChange={(e) => setDebugUserName(e.target.value)}\n                    placeholder=\"ユーザー名を上書き\"\n                    className=\"w-full bg-white border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-yellow-500 focus:border-yellow-500\"\n                  />\n                </div>\n                <div>\n                  <label\n                    htmlFor=\"debugVideoUrl\"\n                    className=\"block text-sm font-medium text-gray-700 mb-1\"\n                  >\n                    動画URL (デバッグ用)\n                  </label>\n                  <input\n                    type=\"text\"\n                    id=\"debugVideoUrl\"\n                    value={debugVideoUrl}\n                    onChange={(e) => setDebugVideoUrl(e.target.value)}\n                    placeholder=\"GCS URLを上書き\"\n                    className=\"w-full bg-white border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-yellow-500 focus:border-yellow-500\"\n                  />\n                </div>\n                <div>\n                  <label\n                    htmlFor=\"debugTheme\"\n                    className=\"block text-sm font-medium text-gray-700 mb-1\"\n                  >\n                    テーマ (デバッグ用)\n                  </label>\n                  <input\n                    type=\"text\"\n                    id=\"debugTheme\"\n                    value={debugTheme}\n                    onChange={(e) => setDebugTheme(e.target.value)}\n                    placeholder=\"テーマを上書き\"\n                    className=\"w-full bg-white border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-yellow-500 focus:border-yellow-500\"\n                  />\n                </div>\n                <div>\n                  <label\n                    htmlFor=\"debugRequests\"\n                    className=\"block text-sm font-medium text-gray-700 mb-1\"\n                  >\n                    リクエスト (デバッグ用)\n                  </label>\n                  <textarea\n                    id=\"debugRequests\"\n                    rows={2}\n                    value={debugRequests}\n                    onChange={(e) => setDebugRequests(e.target.value)}\
+                    placeholder=\"リクエストを上書き\"\
+                    className=\"w-full bg-white border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-yellow-500 focus:border-yellow-500\"\
+                  />\
+                </div>\
+              </div>\
+            </div>\
+            {/* End Debugging Section */}\n\n            <div>\n              <div className=\"text-center mb-4\">\n                <p className=\"font-bold text-gray-800\">\n                  {userName}さん、こんにちは！一緒に頑張りましょう！\n                </p>
                 <p className="text-sm text-gray-600 mt-2">
                   まずは、今日のテーマを一つ選んでくれるかな？あなたの目標に合わせて、私もアドバイスの内容を変えていくわ。
                 </p>

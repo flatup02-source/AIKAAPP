@@ -1,15 +1,21 @@
 rules_version = '2';
 
+// Firebase Storage サービスを対象とする
 service firebase.storage {
+  // あなたのGCSバケットにマッチする
   match /b/{bucket}/o {
-    // UID-based access control
-    match /users/{uid}/{allPaths=**} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
-    }
-
-    // Optional: Restrict file types for uploads
-    match /users/{uid}/videos/{fileName} {
-      allow write: if request.auth != null && request.auth.uid == uid && request.resource.contentType.matches('video/.*');
+    
+    // 'uploads' フォルダ内のすべてのファイルにマッチする
+    // {fileName} はワイルドカードで、どんなファイル名にもマッチします
+    match /uploads/{fileName} {
+    
+      // このルールは、誰でもファイルの書き込み（アップロード）を許可します。
+      // これはテスト目的です。本番では `if request.auth != null;` のように
+      // 認証済みユーザーのみに制限する必要があります。
+      allow write: if true;
+      
+      // 読み取りは許可しない（必要に応じて変更してください）
+      allow read: if false;
     }
   }
 }

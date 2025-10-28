@@ -7,7 +7,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDDy5_-jv0BQCCFIHyPgXvH7sBjE83mnp4",
   authDomain: "aikaapp-584fa.firebaseapp.com",
   projectId: "aikaapp-584fa",
-  storageBucket: "aikaapp-584fa.appspot.com",
+  storageBucket: "aikaapp-584fa.firebasestorage.app",
   messagingSenderId: "639286700347",
   appId: "1:639286700347:web:2216c51a5ebb126b516f1e",
   measurementId: "G-T9QETENBLZ"

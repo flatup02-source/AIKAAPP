@@ -1,31 +1,42 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getStorage } from "firebase/storage";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
+import { getAuth, type Auth } from "firebase/auth";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDDy5_-jv0BQCCFIHyPgXvH7sBjE83mnp4",
-  authDomain: "aikaapp-584fa.firebaseapp.com",
-  projectId: "aikaapp-584fa",
-  storageBucket: "aikaapp-584fa.firebasestorage.app",
-  messagingSenderId: "639286700347",
-  appId: "1:639286700347:web:2216c51a5ebb126b516f1e",
-  measurementId: "G-T9QETENBLZ"
-};
+/**
+ * Initialize Firebase App once and reuse it.
+ * Uses explicit typing to avoid "implicitly has type 'any'".
+ * Throws informative errors if required env vars are missing.
+ */
 
-// Initialize Firebase
-let app;
-let db;
-let auth;
-let storage;
-
-function initializeFirebaseClient() {
-  if (typeof window !== 'undefined' && !getApps().length) {
-    app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    auth = getAuth(app);
-    storage = getStorage(app);
+function assertEnv(name: string, value: string | undefined): string {
+  if (!value) {
+    throw new Error(
+      `Missing environment variable ${name}. ` +
+        `Set it in Netlify (Site settings → Build & deploy → Environment) and your local .env file.`
+    );
   }
+  return value;
 }
 
-export { app, db, auth, storage, initializeFirebaseClient };
+const firebaseConfig = {
+  apiKey: assertEnv("NEXT_PUBLIC_FIREBASE_API_KEY", process.env.NEXT_PUBLIC_FIREBASE_API_KEY),
+  authDomain: assertEnv("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN", process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN),
+  projectId: assertEnv("NEXT_PUBLIC_FIREBASE_PROJECT_ID", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID),
+  storageBucket: assertEnv("NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET", process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET),
+  messagingSenderId: assertEnv(
+    "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
+    process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+  ),
+  appId: assertEnv("NEXT_PUBLIC_FIREBASE_APP_ID", process.env.NEXT_PUBLIC_FIREBASE_APP_ID),
+};
+
+let appInstance: FirebaseApp;
+if (getApps().length === 0) {
+  appInstance = initializeApp(firebaseConfig);
+} else {
+  appInstance = getApps()[0]!;
+}
+
+const authInstance: Auth = getAuth(appInstance);
+
+export const app: FirebaseApp = appInstance;
+export const auth: Auth = authInstance;

@@ -3,10 +3,14 @@ import { Storage } from '@google-cloud/storage';
 
 export async function POST(req: NextRequest) {
   try {
-    const { fileName, contentType } = await req.json();
+    const { fileName, contentType, action = 'write' } = await req.json();
 
-    if (!fileName || !contentType) {
-      return NextResponse.json({ message: 'fileName and contentType are required.' }, { status: 400 });
+    if (!fileName) {
+      return NextResponse.json({ message: 'fileName is required.' }, { status: 400 });
+    }
+
+    if (action === 'write' && !contentType) {
+        return NextResponse.json({ message: 'contentType is required for write action.' }, { status: 400 });
     }
 
     // 環境変数から認証情報を取得
@@ -28,12 +32,15 @@ export async function POST(req: NextRequest) {
     const bucket = storage.bucket(bucketName);
     const file = bucket.file(fileName);
 
-    const options = {
-      version: 'v4' as 'v4', // GCS V4 Signed URL
-      action: 'write' as 'write', // PUT method for upload
+    const options: any = {
+      version: 'v4',
+      action: action,
       expires: Date.now() + 15 * 60 * 1000, // 15 minutes
-      contentType: contentType,
     };
+
+    if (action === 'write') {
+      options.contentType = contentType;
+    }
 
     const [url] = await file.getSignedUrl(options);
 

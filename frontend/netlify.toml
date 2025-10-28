@@ -1,2 +1,4 @@
 [build]
   environment = { NODE_OPTIONS = "--max-old-space-size=4096 --openssl-legacy-provider", NODE_VERSION = "20" }
+  command = "next build"
+  publish = ".next"

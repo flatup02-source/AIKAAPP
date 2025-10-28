@@ -1,5 +1,5 @@
 import { getAuth, signInWithCustomToken } from "firebase/auth";
-import { app, auth } from "./firebase";
+import { app, auth } from "../firebase";
 
 /**
  * Sign in with a LINE ID token via your backend endpoint,

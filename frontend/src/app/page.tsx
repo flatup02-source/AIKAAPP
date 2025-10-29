@@ -108,20 +108,6 @@ export default function AikaFormPage() {
     }
   };
 
-  const handleThemeSelect = (selectedTheme: string) => {
-    setTheme(selectedTheme);
-    if (selectedTheme === "まずは楽しむことを重視したい") {
-      setAiPersonality("fun");
-      setAiIntroduction("了解！楽しむのが一番だよね！理屈は抜きにして、とにかくカッコよく動けるように、私が最高の相棒になるよ！よろしく！");
-    } else if (selectedTheme === "プロになりたい") {
-      setAiPersonality("pro");
-      setAiIntroduction("覚悟はいいか。プロの世界は甘くない。私からの要求は厳しくなるが、ついてくるなら世界レベルの視点を授けよう。始めようか。");
-    } else {
-      setAiPersonality("default");
-      setAiIntroduction("");
-    }
-  };
-
   const handleUpload = async () => {
     if (!file || !lineId) {
       alert("File or LINE ID missing.");
@@ -158,6 +144,7 @@ export default function AikaFormPage() {
       setUploading(false);
     }
   };
+
 
   async function handleAnalysis(storagePath: string, uniqueFileName: string, bucketName: string, fileType: string, fileSize: number) {
     try {
@@ -319,11 +306,7 @@ export default function AikaFormPage() {
                 <p className="font-bold text-gray-800">{userName}さん、こんにちは！一緒に頑張りましょう！</p>
                 <p className="text-sm text-gray-600 mt-2">まずは、今日のテーマを一つ選んでくれるかな？あなたの目標に合わせて、私もアドバイスの内容を変えていくわ。</p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {themes.map((item) => (
-                  <button key={item} onClick={() => handleThemeSelect(item)} className={`w-full text-center px-5 py-4 rounded-xl transition-all duration-200 font-semibold text-sm ${ theme === item ? "bg-blue-500 text-white shadow-lg scale-105 transform" : "bg-white text-gray-800 hover:bg-gray-100" }`}>{item}</button>
-                ))}
-              </div>
+
               {aiIntroduction && (
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg text-center">
                   <p className="text-sm text-blue-800 font-semibold">{aiIntroduction}</p>
@@ -334,7 +317,7 @@ export default function AikaFormPage() {
               <label htmlFor="requests" className="block text-sm font-bold text-gray-700 mb-2">もし「特にここを見てほしい！」というポイントがあったら、気軽に教えてね！</label>
               <textarea id="requests" rows={4} value={requests} onChange={(e) => setRequests(e.target.value)} placeholder="（例：右ストレートがブレちゃう、ステップインのタイミングがわからない…など）" className="w-full bg-white/50 border-gray-300 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 transition-shadow duration-200" />
             </div>
-            <div>
+            {/* <div>
               <p className="text-sm text-gray-600 mb-2">準備ができたら、あなたの「今」の動きを見せて。完璧じゃなくて大丈夫。あなたの動きの中に眠る「未来の強さ」の原石を、私が見つけ出すから。さあ、撮影ボタンを押して！</p>
 <div className="w-full max-w-md mx-auto p-4 bg-slate-100 rounded-2xl shadow-inner space-y-4">
 
@@ -364,7 +347,7 @@ export default function AikaFormPage() {
     />
   </label>
 </div>
-            </div>
+            </div> */}
           </div>
         </main>
         <footer className="text-left text-sm bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-lg border border-white/50">

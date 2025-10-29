@@ -17,3 +17,14 @@ frontend/.next/
 
 # macOS
 .DS_Store
+
+# Build artifacts and dependencies
+/.next/
+/.netlify/
+
+# Backend specific
+/backend/node_modules/
+/backend-worker/node_modules/
+
+# Other
+dummy_100kb.mp4

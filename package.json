@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "echo $GOOGLE_CREDENTIALS_JSON > google-credentials.json && echo \"Public Key: $NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY\" && echo \"Private Key: $IMAGEKIT_PRIVATE_KEY\" && echo \"URL Endpoint: $NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT\" && npx next build --turbopack",
+    "build": "echo $GOOGLE_CREDENTIALS_JSON > google-credentials.json && echo \"Public Key: $NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY\" && echo \"Private Key: $IMAGEKIT_PRIVATE_KEY\" && echo \"URL Endpoint: $NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT\" && npx next build",
     "start": "next start",
     "lint": "eslint"
   },
@@ -34,6 +34,6 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "5.9.3"
   }
 }

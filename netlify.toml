@@ -1,7 +1,14 @@
 [build]
-  base    = "frontend"
+  base = "frontend"
   publish = ".next"
-  command = "npm run build"
+  command = "next build"
 
 [build.environment]
   NODE_OPTIONS = "--max-old-space-size=4096"
+  IMAGEKIT_PRIVATE_KEY = "YOUR_IMAGEKIT_PRIVATE_KEY"
+  NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY = "YOUR_NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY"
+  NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT = "YOUR_NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT"
+  GOOGLE_PROJECT_ID = "YOUR_GOOGLE_PROJECT_ID"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

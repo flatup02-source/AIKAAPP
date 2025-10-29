@@ -7,16 +7,13 @@ package-lock.json
 # Sensitive files
 service-account-key.json
 .env.local
-
-<<<<<<< HEAD
-# Google認証情報（超重要秘密）
 google-credentials.json
 innate-algebra-474710-f0-b696e49a005d.json
 test-vertex.*
-service-account-key.json
+
+# Next.js specific ignores
 frontend/node_modules/
 frontend/.next/
-=======
+
 # macOS
 .DS_Store
->>>>>>> 1ce34e740c1b9fe9d747a3d8bcc726a5e130c3b9

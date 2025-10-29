@@ -1,11 +1,7 @@
 [build]
-<<<<<<< HEAD
-  base = "frontend"
-  publish = "frontend/.next"
-  command = "next build"
-  environment = { NODE_OPTIONS = "--max-old-space-size=4096", IMAGEKIT_PRIVATE_KEY = "YOUR_IMAGEKIT_PRIVATE_KEY", NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY = "YOUR_NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY", NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT = "YOUR_NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT", GOOGLE_PROJECT_ID = "YOUR_GOOGLE_PROJECT_ID" }
-=======
   base    = "frontend"
-  command = "npm run build"
   publish = ".next"
->>>>>>> 1ce34e740c1b9fe9d747a3d8bcc726a5e130c3b9
+  command = "npm run build"
+
+[build.environment]
+  NODE_OPTIONS = "--max-old-space-size=4096"

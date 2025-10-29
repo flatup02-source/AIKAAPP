@@ -5,3 +5,8 @@
 
 [build.environment]
   NODE_OPTIONS = "--max-old-space-size=4096"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

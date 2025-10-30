@@ -19,18 +19,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       {/* ↓↓ ここに className="bg-gray-900" を追加したぞ！ ↓↓ */}
-      <body className={`${inter.className} bg-gray-900`}>
-        <script>
-          if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-              navigator.serviceWorker.register('/disable-sw.js').then(function(registration) {
-                console.log('Disable Service Worker registered with scope: ', registration.scope);
-              }).catch(function(err) {
-                console.log('Disable Service Worker registration failed: ', err);
-              });
-            });
-          }
-        </script>
+      <body className={`${inter.className} bg-gray-900`>
         {children}
       </body>
     </html>

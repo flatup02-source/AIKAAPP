@@ -5,10 +5,14 @@
   base = "frontend"
 
   # ビルドコマンド
-  command = "npm run export"
+  command = "npm run build"
 
   # ビルド成果物が生成されるディレクトリ (baseからの相対パス)
-  publish = "out"
+  publish = ".next"
+
+# Next.jsの機能をNetlifyで最大限に活用するための必須プラグイン
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 # Service Worker を毎回最新取得（強キャッシュを避け、壊れた SW の再適用を阻止）
 [[headers]]

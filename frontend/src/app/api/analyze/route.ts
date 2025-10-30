@@ -3,18 +3,12 @@ import { VideoIntelligenceServiceClient, protos } from '@google-cloud/video-inte
 import { GoogleAuth } from 'google-auth-library';
 import { requireProjectId } from '@/lib/gcloud';
 
+import { getAuthClientFromEnv } from '@/lib/gcloud';
+
 async function getVideoClient() {
   const projectId = requireProjectId();
-  const raw = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
-  if (!raw) throw new Error('Missing environment variable GOOGLE_APPLICATION_CREDENTIALS_JSON');
-  let json: Record<string, unknown>;
-  try {
-    json = JSON.parse(raw);
-  } catch {
-    throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON is not valid JSON');
-  }
-  const auth = new GoogleAuth({ credentials: json as any, scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
-  return new VideoIntelligenceServiceClient({ projectId, auth });
+  const authClient = await getAuthClientFromEnv(['https://www.googleapis.com/auth/cloud-platform']);
+  return new VideoIntelligenceServiceClient({ projectId, auth: authClient as any });
 }
 
 export async function POST(req: Request) {

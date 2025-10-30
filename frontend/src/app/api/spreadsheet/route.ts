@@ -4,21 +4,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import axios from 'axios';
 
-// Google Sheets APIの認証と設定
-const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || '{}');
-const auth = new google.auth.GoogleAuth({
-  credentials: {
-    client_email: credentials.client_email,
-    private_key: credentials.private_key,
-  },
-  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-});
-
-const sheets = google.sheets({ version: 'v4', auth });
-const spreadsheetId = process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID;
+import { getGoogleAuthFromEnv } from '@/lib/gcloud';
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await getGoogleAuthFromEnv(['https://www.googleapis.com/auth/spreadsheets']);
+    const sheets = google.sheets({ version: 'v4', auth });
+    const spreadsheetId = process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID;
     const body = await req.json();
     const { userId, userName, videoUrl, timestamp } = body;
 

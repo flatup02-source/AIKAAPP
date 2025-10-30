@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       {/* ↓↓ ここに className="bg-gray-900" を追加したぞ！ ↓↓ */}
-      <body className={`${inter.className} bg-gray-900`>
+      <body className={`${inter.className} bg-gray-900`}>
         {children}
       </body>
     </html>

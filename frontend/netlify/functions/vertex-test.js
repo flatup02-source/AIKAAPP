@@ -1,30 +1,15 @@
 // file: frontend/netlify/functions/vertex-test.js
 // Vertex AI APIへの最小テスト呼び出し（Endpoints一覧）。成功すればMetricsに出ます。
 
-import { GoogleAuth } from 'google-auth-library';
+import { getAuthClientFromEnv, requireProjectId } from '../../src/lib/gcloud';
 
 export default async (req, context) => {
-  const rawJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
-  const projectId = process.env.GOOGLE_PROJECT_ID;
+  const projectId = requireProjectId();
   const location = 'asia-northeast1'; // リージョン固定
 
-  if (!rawJson) {
-    return new Response(JSON.stringify({ ok: false, error: 'GOOGLE_APPLICATION_CREDENTIALS_JSON is missing' }), { status: 500 });
-  }
-  if (!projectId) {
-    return new Response(JSON.stringify({ ok: false, error: 'GOOGLE_PROJECT_ID is missing' }), { status: 500 });
-  }
-
   try {
-    // サービスアカウント鍵JSONをパース
-    const credentials = JSON.parse(rawJson);
-
     // GoogleAuthで認証クライアントを作成
-    const auth = new GoogleAuth({
-      credentials,
-      scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-    });
-    const client = await auth.getClient();
+    const client = await getAuthClientFromEnv(['https://www.googleapis.com/auth/cloud-platform']);
 
     // Vertex AI v1 Endpoints一覧を取得
     const url = `https://asia-northeast1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${location}/endpoints`;

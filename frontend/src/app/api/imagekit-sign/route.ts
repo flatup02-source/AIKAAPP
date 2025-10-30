@@ -1,34 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Storage } from '@google-cloud/storage';
+import { getAuthClientFromEnv, requireProjectId } from '@/lib/gcloud';
+
+async function getStorage() {
+  const projectId = requireProjectId();
+  const authClient = await getAuthClientFromEnv(['https://www.googleapis.com/auth/devstorage.read_write']);
+  const storage = new Storage({ projectId, authClient });
+  return storage;
+}
 
 export async function POST(req: NextRequest) {
   try {
     const { fileName, contentType, action = 'write' } = await req.json();
 
     if (!fileName) {
-      return NextResponse.json({ message: 'fileName is required.' }, { status: 400 });
+      return NextResponse.json({ ok: false, error: 'fileName is required.' }, { status: 400 });
     }
 
     if (action === 'write' && !contentType) {
-        return NextResponse.json({ message: 'contentType is required for write action.' }, { status: 400 });
+      return NextResponse.json({ ok: false, error: 'contentType is required for write action.' }, { status: 400 });
     }
 
-    // 環境変数から認証情報を取得
-    const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON || '{}');
     const bucketName = process.env.GCS_BUCKET_NAME;
-
     if (!bucketName) {
-      return NextResponse.json({ message: 'GCS_BUCKET_NAME is not set.' }, { status: 500 });
+      throw new Error('The GCS_BUCKET_NAME environment variable is not set.');
     }
 
-    const storage = new Storage({
-      projectId: credentials.project_id,
-      credentials: {
-        client_email: credentials.client_email,
-        private_key: credentials.private_key,
-      },
-    });
-
+    const storage = await getStorage();
     const bucket = storage.bucket(bucketName);
     const file = bucket.file(fileName);
 
@@ -44,14 +42,10 @@ export async function POST(req: NextRequest) {
 
     const [url] = await file.getSignedUrl(options);
 
-    return NextResponse.json({ signedUrl: url });
+    return NextResponse.json({ ok: true, signedUrl: url });
 
-  } catch (error) {
-    console.error('Error generating signed URL:', error);
-    let errorMessage = 'Internal Server Error';
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-    return NextResponse.json({ message: errorMessage }, { status: 500 });
+  } catch (e: any) {
+    console.error('Error generating signed URL:', e);
+    return NextResponse.json({ ok: false, error: String(e?.message ?? 'Unknown error') }, { status: 500 });
   }
 }

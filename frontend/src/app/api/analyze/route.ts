@@ -1,53 +1,42 @@
-import {
-  VideoIntelligenceServiceClient,
-  protos,
-} from "@google-cloud/video-intelligence";
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+import { VideoIntelligenceServiceClient, protos } from '@google-cloud/video-intelligence';
+import { GoogleAuth } from 'google-auth-library';
+import { requireProjectId } from '@/lib/gcloud';
 
-// 環境変数からプロジェクトIDを取得するか、直接ここにハードコードする（非推奨）
-// 本番環境では環境変数を使用するのがベストプラクティスです。
-// プロジェクトID: "innate-algebra-474710-f0" を設定しました。
-const projectId = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || "innate-algebra-474710-f0";
-
-const videoClient = new VideoIntelligenceServiceClient({
-  projectId: projectId, // ここでプロジェクトIDを渡す
-});
+async function getVideoClient() {
+  const projectId = requireProjectId();
+  const raw = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+  if (!raw) throw new Error('Missing environment variable GOOGLE_APPLICATION_CREDENTIALS_JSON');
+  let json: Record<string, unknown>;
+  try {
+    json = JSON.parse(raw);
+  } catch {
+    throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON is not valid JSON');
+  }
+  const auth = new GoogleAuth({ credentials: json as any, scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
+  return new VideoIntelligenceServiceClient({ projectId, auth });
+}
 
 export async function POST(req: Request) {
   try {
-    console.log("Video analysis request received.");
-
-    // フロントエンドから送られてきた情報（JSON）を読み取る
+    const client = await getVideoClient();
     const { gcsUri } = await req.json();
 
-    // gcsUriが送られてこなかった場合のエラー処理
     if (!gcsUri) {
-      return NextResponse.json(
-        { message: "gcsUri is required." },
-        { status: 400 }
-      );
+      return NextResponse.json({ ok: false, error: 'gcsUri is required.' }, { status: 400 });
     }
 
-    const request = {
+    const operation = await client.annotateVideo({
       inputUri: gcsUri,
       features: [protos.google.cloud.videointelligence.v1.Feature.OBJECT_TRACKING],
-    };
-
-    console.log("Sending request to Video Intelligence API...");
-    const [operation] = await videoClient.annotateVideo(request);
-    console.log("Waiting for operation to complete...");
-    await operation.promise(); // ここで完了を待つ
-
-    console.log("Video analysis successful.");
-    return NextResponse.json({
-      message: "動画解析が正常に開始されました。",
     });
+    
+    // Don't wait for the operation to complete, just return that it was accepted.
+    // The client can poll for the result separately.
+    return NextResponse.json({ ok: true, operationName: operation[0].name });
 
-  } catch (error) {
-    console.error("ERROR IN VIDEO ANALYSIS:", error);
-    return NextResponse.json(
-      { message: "動画解析中にエラーが発生しました。" },
-      { status: 500 }
-    );
+  } catch (e: any) {
+    console.error('Error in video analysis:', e);
+    return NextResponse.json({ ok: false, error: String(e?.message ?? 'Unknown error') }, { status: 500 });
   }
 }

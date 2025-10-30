@@ -1,29 +1,27 @@
-// file: netlify/functions/vertex-test.js
+// file: frontend/netlify/functions/vertex-test.js
 // Vertex AI APIへの最小テスト呼び出し（Endpoints一覧）。成功すればMetricsに出ます。
 
 import { GoogleAuth } from 'google-auth-library';
 
 export default async (req, context) => {
-  const rawJson = process.env.GOOGLE_CREDENTIALS_JSON;
-  const projectId = process.env.GOOGLE_PROJECT_ID || 'innate-algebra-474710-f0';
+  const rawJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+  const projectId = process.env.GOOGLE_PROJECT_ID;
   const location = 'asia-northeast1'; // リージョン固定
 
   if (!rawJson) {
-    return new Response(JSON.stringify({ ok: false, error: 'GOOGLE_CREDENTIALS_JSON is missing' }), { status: 500 });
+    return new Response(JSON.stringify({ ok: false, error: 'GOOGLE_APPLICATION_CREDENTIALS_JSON is missing' }), { status: 500 });
+  }
+  if (!projectId) {
+    return new Response(JSON.stringify({ ok: false, error: 'GOOGLE_PROJECT_ID is missing' }), { status: 500 });
   }
 
   try {
-    // サービスアカウント鍵JSONを復元
-    const creds = JSON.parse(rawJson);
-
-    // 重要フィールドの存在確認
-    if (!creds.client_email || !creds.project_id || !creds.private_key_id) {
-      return new Response(JSON.stringify({ ok: false, error: 'Invalid credentials JSON: missing client_email/project_id/private_key_id' }), { status: 500 });
-    }
+    // サービスアカウント鍵JSONをパース
+    const credentials = JSON.parse(rawJson);
 
     // GoogleAuthで認証クライアントを作成
     const auth = new GoogleAuth({
-      credentials: creds,
+      credentials,
       scopes: ['https://www.googleapis.com/auth/cloud-platform'],
     });
     const client = await auth.getClient();
@@ -51,7 +49,7 @@ export default async (req, context) => {
       httpStatus: e?.response?.status ?? null,
       response: e?.response?.data ?? null,
       hints: [
-        'Keys: private_key_id が Google Cloud Keys の e3b196… と一致すること',
+        'Keys: private_key_id が Google Cloud Keys のものと一致すること',
         'Role: サービスアカウントに Vertex AI User が付与済みであること',
         'Region/Endpoint: asia-northeast1 / asia-northeast1-aiplatform.googleapis.com',
         'Netlify再デプロイが完了していること',

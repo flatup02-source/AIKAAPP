@@ -13,3 +13,9 @@
 # Next.jsの機能をNetlifyで最大限に活用するための必須プラグイン
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Service Worker を毎回最新取得（強キャッシュを避け、壊れた SW の再適用を阻止）
+[[headers]]
+  for = "/cnm-sw.js"
+  [headers.values]
+  Cache-Control = "no-store, no-cache, must-revalidate, max-age=0, s-maxage=0"

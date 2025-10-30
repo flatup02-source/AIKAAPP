@@ -1,7 +1,8 @@
 [build]
   base = "frontend"
-  publish = ".next"
-  command = "next build"
+  publish = "frontend/.next"
+  command = "npm run build"
+  functions = "frontend/netlify/functions"
 
 [build.environment]
   NODE_OPTIONS = "--max-old-space-size=4096"

@@ -14,7 +14,8 @@ async function getVideoClient() {
     throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON is not valid JSON');
   }
   const auth = new GoogleAuth({ credentials: json as any, scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
-  return new VideoIntelligenceServiceClient({ projectId, auth });
+  const authClient = await auth.getClient();
+  return new VideoIntelligenceServiceClient({ projectId, auth: authClient });
 }
 
 export async function POST(req: Request) {

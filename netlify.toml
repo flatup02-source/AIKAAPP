@@ -1,4 +1,4 @@
-# /netlify.toml (プロジェクトのルートに配置する最終版)
+# /netlify.toml (プロジェクトのルートに配置する【最終確定版】)
 
 [build]
   # Next.jsプロジェクトがあるディレクトリ
@@ -7,8 +7,8 @@
   # ビルドコマンド
   command = "npm run build"
 
-  # ビルド成果物が生成されるディレクトリ
-  publish = "frontend/.next"
+  # ビルド成果物が生成されるディレクトリ (baseからの相対パス)
+  publish = ".next" # ← "frontend/" を削除しました
 
 # Next.jsの機能をNetlifyで最大限に活用するための必須プラグイン
 [[plugins]]

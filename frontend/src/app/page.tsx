@@ -6,7 +6,7 @@ import { useState, ChangeEvent, useEffect } from "react";
 import Image from "next/image";
 import axios from "axios";
 import { ref, uploadBytes } from "firebase/storage";
-import { storage } from "@/lib/firebase";
+import { storage, isFirebaseInitialized } from "@/lib/firebase";
 import liff from "@line/liff";
 
 // --- Helper Functions ---
@@ -33,7 +33,9 @@ const validateUploadPath = (lineId: string, fileName: string): string | null => 
 const getUploadMetadata = (lineId: string, file: File) => {
   const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET?.replace(".appspot.com", "") || "aikaapp-584fa";
   const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'tmp';
-  const uniqueFileName = `${Date.now()}-${crypto.randomUUID()}.${fileExtension}`;
+  // Use crypto.randomUUID() only in browser environment
+  const uuid = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+  const uniqueFileName = `${Date.now()}-${uuid}.${fileExtension}`;
   const storagePath = `users/${lineId}/videos/${uniqueFileName}`;
   const contentType = file.type || getMimeType(file.name);
   return { storagePath, contentType, uniqueFileName, bucketName };
@@ -65,10 +67,18 @@ export default function AikaFormPage() {
   useEffect(() => {
     const initializeLiff = async () => {
       try {
+        // Only initialize LIFF in browser environment
+        if (typeof window === 'undefined') {
+          return;
+        }
+        
         const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
         if (!liffId) {
           console.error("LIFF ID is not defined in environment variables.");
-          alert("LIFF IDが設定されていません。");
+          // Only show alert if we're in LINE app context
+          if (window.location.href.includes('line.me')) {
+            alert("LIFF IDが設定されていません。");
+          }
           return;
         }
         
@@ -87,10 +97,13 @@ export default function AikaFormPage() {
 
       } catch (err: unknown) {
         console.error("LIFF Initialization Error:", err);
-        if (err instanceof Error) {
-          alert(`LIFF初期化に失敗しました: ${err.message}。LINEアプリ内で再度お試しください。`);
-        } else {
-          alert("LIFF初期化に失敗しました。LINEアプリ内で再度お試しください。");
+        // Only show alert if we're in LINE app context
+        if (typeof window !== 'undefined' && window.location.href.includes('line.me')) {
+          if (err instanceof Error) {
+            alert(`LIFF初期化に失敗しました: ${err.message}。LINEアプリ内で再度お試しください。`);
+          } else {
+            alert("LIFF初期化に失敗しました。LINEアプリ内で再度お試しください。");
+          }
         }
       }
     };
@@ -114,6 +127,19 @@ export default function AikaFormPage() {
       alert("ファイルが選択されていないか、LINEユーザー情報が取得できていません。");
       return;
     }
+    
+    if (!theme) {
+      alert("テーマを選択してください。");
+      return;
+    }
+    
+    // Check if Firebase is initialized
+    if (!isFirebaseInitialized()) {
+      alert("Firebaseの初期化に失敗しました。環境変数を確認してください。");
+      setViewState("form");
+      return;
+    }
+    
     const validationError = validateUploadPath(lineId, file.name);
     if (validationError) {
       alert(`[Validation Error] ${validationError}`);
@@ -142,15 +168,33 @@ export default function AikaFormPage() {
   const handleAnalysis = async (storagePath: string, uniqueFileName: string, bucketName: string, fileType: string, fileSize: number) => {
     try {
       const gcsUri = `gs://${bucketName}/${storagePath}`;
+      
+      // Call analyze-video API - it only expects gcsUri
       const analysisResponse = await axios.post("/api/analyze-video", {
-        gcsUri, idolFighterName, liffUserId: lineId, theme,
+        gcsUri,
       });
+
+      // Validate response structure
+      if (!analysisResponse.data || !analysisResponse.data.power_level || !analysisResponse.data.comment) {
+        throw new Error("分析結果の形式が正しくありません。");
+      }
 
       const { power_level, comment } = analysisResponse.data;
 
+      // Call spreadsheet API - only required fields are sent
       await axios.post("/api/spreadsheet", {
-        userName, theme, requests, videoUrl: gcsUri, fileName: uniqueFileName,
-        fileType, fileSize, powerLevel: power_level, aiComment: comment,
+        userId: lineId, 
+        timestamp: new Date().toISOString(), 
+        userName: userName || "未設定", 
+        videoUrl: gcsUri,
+        // Additional fields are ignored by the API but kept for potential future use
+        theme, 
+        requests, 
+        fileName: uniqueFileName,
+        fileType, 
+        fileSize, 
+        powerLevel: power_level, 
+        aiComment: comment,
       });
 
       setPowerLevel(power_level);
@@ -158,9 +202,20 @@ export default function AikaFormPage() {
       setViewState("result");
     } catch (err: unknown) {
       console.error("Error during post-upload API calls:", err);
-      const errorMessage = axios.isAxiosError(err) 
-        ? JSON.stringify(err.response?.data || err.message, null, 2) 
-        : (err instanceof Error ? err.message : String(err));
+      let errorMessage = "不明なエラーが発生しました。";
+      
+      if (axios.isAxiosError(err)) {
+        if (err.response) {
+          errorMessage = `サーバーエラー: ${err.response.status} - ${JSON.stringify(err.response.data)}`;
+        } else if (err.request) {
+          errorMessage = "サーバーに接続できませんでした。ネットワーク接続を確認してください。";
+        } else {
+          errorMessage = err.message;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
       alert(`アップロード後の処理でエラーが発生しました:\n\n${errorMessage}`);
       setViewState("form");
     }
@@ -233,12 +288,15 @@ export default function AikaFormPage() {
           </p>
         </header>
 
-        <div className="bg-yellow-100 p-4 rounded-lg text-sm text-gray-800 my-4 shadow-inner">
-          <h3 className="font-bold text-base mb-2">【デバッグ情報】</h3>
-          <p><span className="font-semibold">LINEアプリ内:</span> {isInClient.toString()}</p>
-          <p><span className="font-semibold">ログイン状態:</span> {isLoggedIn.toString()}</p>
-          <p><span className="font-semibold">LINE User ID:</span> {lineId || "未取得"}</p>
-        </div>
+        {process.env.NODE_ENV === 'development' && (
+          <div className="bg-yellow-100 p-4 rounded-lg text-sm text-gray-800 my-4 shadow-inner">
+            <h3 className="font-bold text-base mb-2">【デバッグ情報】</h3>
+            <p><span className="font-semibold">LINEアプリ内:</span> {isInClient.toString()}</p>
+            <p><span className="font-semibold">ログイン状態:</span> {isLoggedIn.toString()}</p>
+            <p><span className="font-semibold">LINE User ID:</span> {lineId || "未取得"}</p>
+            <p><span className="font-semibold">Firebase初期化:</span> {isFirebaseInitialized() ? "✓" : "✗"}</p>
+          </div>
+        )}
 
         <main className="bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow-lg space-y-8 border border-white/50">
           <div className="space-y-6">
@@ -272,7 +330,7 @@ export default function AikaFormPage() {
                     <p className="text-gray-800 font-medium truncate">{file.name}</p>
                   </div>
                 )}
-                <button onClick={handleUpload} disabled={!file || uploading} className="w-full bg-black text-white font-bold py-4 px-6 rounded-xl text-lg transition-all hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                <button onClick={handleUpload} disabled={!file || !theme || uploading} className="w-full bg-black text-white font-bold py-4 px-6 rounded-xl text-lg transition-all hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed">
                   {uploading ? "解析中..." : "18号、頼んだ！"}
                 </button>
                 <label className="block w-full text-center text-sm text-gray-600 bg-white py-2 px-4 rounded-xl cursor-pointer hover:bg-gray-200 transition-colors">

@@ -15,7 +15,15 @@ export async function POST(req: NextRequest) {
     const { userId, userName, videoUrl, timestamp } = body;
 
     if (!userId || !videoUrl || !timestamp) {
-      return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json({ 
+        message: 'Missing required fields',
+        received: { userId: !!userId, videoUrl: !!videoUrl, timestamp: !!timestamp }
+      }, { status: 400 });
+    }
+
+    if (!spreadsheetId) {
+      console.error('NEXT_PUBLIC_GOOGLE_SHEET_ID is not set');
+      return NextResponse.json({ message: 'Spreadsheet ID is not configured' }, { status: 500 });
     }
 
     // Googleスプレッドシートへの書き込み

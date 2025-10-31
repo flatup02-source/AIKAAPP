@@ -7,7 +7,7 @@ import Image from "next/image";
 import axios from "axios";
 import { ref, uploadBytes } from "firebase/storage";
 import { storage, isFirebaseInitialized } from "@/lib/firebase";
-import liff from "@line/liff";
+// LIFFは環境依存のため、動的インポートに切り替える
 
 // --- Helper Functions ---
 const getMimeType = (fileName: string): string => {
@@ -82,6 +82,7 @@ export default function AikaFormPage() {
           return;
         }
         
+        const liff = (await import('@line/liff')).default;
         await liff.init({ liffId });
         setIsInClient(liff.isInClient());
 

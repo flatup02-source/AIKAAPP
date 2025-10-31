@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import admin from 'firebase-admin';
 import axios from 'axios';
 import { NextResponse } from 'next/server'; // Import NextResponse for API responses

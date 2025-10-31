@@ -3,7 +3,7 @@
 [build]
   # UI側の Base/Publish/Command は未設定（空）にしてください
   # frontend配下でビルドし、成果物は frontend/.next を公開
-  command = "npm --prefix frontend run build"
+  command = "npm --prefix frontend install && npm --prefix frontend run build"
   publish = "frontend/.next"
 
   # Functions ディレクトリを明示（Next.jsプラグインでも検出されます）

@@ -1,18 +1,13 @@
 # /netlify.toml (プロジェクトのルートに配置する【最終確定版】)
 
 [build]
-  # Next.jsプロジェクトがあるディレクトリ
-  base = "frontend"
+  # UI側の Base/Publish/Command は未設定（空）にしてください
+  # frontend配下でビルドし、成果物は frontend/.next を公開
+  command = "npm --prefix frontend run build"
+  publish = "frontend/.next"
 
-  # Functions に渡す環境変数を最小限に制限（Lambda 4KB 制限対策）
-  [build.environment]
-    INCLUDE_ENV = "NODE_ENV,NEXT_PUBLIC_GOOGLE_SHEET_ID,NEXT_PUBLIC_FIREBASE_API_KEY,NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,NEXT_PUBLIC_FIREBASE_PROJECT_ID,NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,NEXT_PUBLIC_FIREBASE_APP_ID,NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,NEXT_PUBLIC_LIFF_ID,GOOGLE_APPLICATION_CREDENTIALS_JSON,GOOGLE_PROJECT_ID"
-
-  # ビルドコマンド
-  command = "npm run build"
-
-  # ビルド成果物が生成されるディレクトリ (baseからの相対パス)
-  publish = ".next"
+  # Functions ディレクトリを明示（Next.jsプラグインでも検出されます）
+  functions = "frontend/netlify/functions"
 
 # Next.jsの機能をNetlifyで最大限に活用するための必須プラグイン
 [[plugins]]

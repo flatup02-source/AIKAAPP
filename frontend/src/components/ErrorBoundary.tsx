@@ -33,23 +33,51 @@ export class ErrorBoundary extends Component<Props, State> {
       }
       
       return (
-        <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white p-4">
-          <div className="text-center max-w-md">
-            <h1 className="text-2xl font-bold mb-4">エラーが発生しました</h1>
-            <p className="text-gray-400 mb-4">
+        <div style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#1a1a1a',
+          color: '#fff',
+          padding: '20px'
+        }}>
+          <div style={{ textAlign: 'center', maxWidth: '500px' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>
+              エラーが発生しました
+            </h1>
+            <p style={{ color: '#999', marginBottom: '20px' }}>
               ページの読み込み中にエラーが発生しました。ページを再読み込みしてください。
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#3b82f6',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '16px'
+              }}
             >
               再読み込み
             </button>
-            {this.state.error && process.env.NODE_ENV === 'development' && (
-              <details className="mt-4 text-left">
-                <summary className="cursor-pointer text-sm text-gray-500">エラー詳細</summary>
-                <pre className="mt-2 text-xs bg-gray-800 p-4 rounded overflow-auto">
-                  {this.state.error.stack}
+            {this.state.error && (
+              <details style={{ marginTop: '20px', textAlign: 'left' }}>
+                <summary style={{ cursor: 'pointer', fontSize: '14px', color: '#999', marginBottom: '10px' }}>
+                  エラー詳細
+                </summary>
+                <pre style={{
+                  marginTop: '10px',
+                  fontSize: '12px',
+                  backgroundColor: '#2a2a2a',
+                  padding: '16px',
+                  borderRadius: '8px',
+                  overflow: 'auto',
+                  color: '#fff'
+                }}>
+                  {this.state.error.stack || this.state.error.message}
                 </pre>
               </details>
             )}

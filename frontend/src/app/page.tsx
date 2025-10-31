@@ -74,41 +74,51 @@ export default function AikaFormPage() {
         
         const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
         if (!liffId) {
-          console.error("LIFF ID is not defined in environment variables.");
-          // Only show alert if we're in LINE app context
-          if (window.location.href.includes('line.me')) {
-            alert("LIFF IDが設定されていません。");
-          }
+          console.warn("LIFF ID is not defined in environment variables. Continuing without LINE authentication.");
+          // LIFFがなくてもページは表示する
           return;
         }
         
-        const liff = (await import('@line/liff')).default;
-        await liff.init({ liffId });
-        setIsInClient(liff.isInClient());
+        // 動的インポートでエラーを捕捉
+        let liff;
+        try {
+          const liffModule = await import('@line/liff');
+          liff = liffModule.default;
+        } catch (importError) {
+          console.error("Failed to import LIFF:", importError);
+          // インポート失敗でもページは表示する
+          return;
+        }
+        
+        try {
+          await liff.init({ liffId });
+          setIsInClient(liff.isInClient());
 
-        if (!liff.isLoggedIn()) {
-          liff.login({ redirectUri: window.location.href });
-          return;
+          if (!liff.isLoggedIn()) {
+            liff.login({ redirectUri: window.location.href });
+            return;
+          }
+          
+          setIsLoggedIn(true);
+          const profile = await liff.getProfile();
+          setUserName(profile.displayName || "ゲスト");
+          setLineId(profile.userId);
+        } catch (initError) {
+          console.error("LIFF initialization failed:", initError);
+          // 初期化失敗でもページは表示する（LINE以外の環境でも使えるように）
         }
-        
-        setIsLoggedIn(true);
-        const profile = await liff.getProfile();
-        setUserName(profile.displayName);
-        setLineId(profile.userId);
 
       } catch (err: unknown) {
         console.error("LIFF Initialization Error:", err);
-        // Only show alert if we're in LINE app context
-        if (typeof window !== 'undefined' && window.location.href.includes('line.me')) {
-          if (err instanceof Error) {
-            alert(`LIFF初期化に失敗しました: ${err.message}。LINEアプリ内で再度お試しください。`);
-          } else {
-            alert("LIFF初期化に失敗しました。LINEアプリ内で再度お試しください。");
-          }
-        }
+        // エラーが発生してもページは表示する
+        // アラートは表示しない（LINE以外の環境でも使えるように）
       }
     };
-    initializeLiff();
+    
+    // 非同期実行（ブロックしない）
+    initializeLiff().catch(err => {
+      console.error("Unhandled error in LIFF initialization:", err);
+    });
   }, []);
 
   // --- Handlers ---
@@ -268,19 +278,20 @@ export default function AikaFormPage() {
     );
   }
   
+  // メインフォームのレンダリング（エラーが発生しても表示される）
   return (
-    <div className="min-h-screen text-gray-800 flex justify-center py-12 px-4" style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
-      <div className="w-full max-w-2xl space-y-12">
-        <header className="text-center">
-           <div className="w-full h-auto max-w-xs mx-auto mb-4 rounded-lg md:w-48 md:h-48 md:rounded-full overflow-hidden">
-            <Image
-              src={`https://ik.imagekit.io/FLATUPGYM/b9d4a676-0903-444c-91d2-50222dc3294f.png?updatedAt=1760340781490`}
-              alt="AIKA 18"
-              width={400}
-              height={400}
-              priority
-            />
-          </div>
+      <div className="min-h-screen text-gray-800 flex justify-center py-12 px-4" style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
+        <div className="w-full max-w-2xl space-y-12">
+          <header className="text-center">
+             <div className="w-full h-auto max-w-xs mx-auto mb-4 rounded-lg md:w-48 md:h-48 md:rounded-full overflow-hidden">
+              <Image
+                src={`https://ik.imagekit.io/FLATUPGYM/b9d4a676-0903-444c-91d2-50222dc3294f.png?updatedAt=1760340781490`}
+                alt="AIKA 18"
+                width={400}
+                height={400}
+                priority
+              />
+            </div>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800 drop-shadow-sm leading-tight">
             この10秒で、あなたのフォームはもっと輝く。
           </h1>

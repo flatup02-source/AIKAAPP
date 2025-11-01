@@ -46,14 +46,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Accepted (skipped Sheets write at runtime)' }, { status: 202 });
     }
     
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://serene-zabaione-8c4e2a.netlify.app';
-    const videoAnalysisUrl = `${baseUrl}/api/analyze-video`;
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || req.nextUrl?.origin || 'https://serene-zabaione-8c4e2a.netlify.app';
+    const videoAnalysisUrl = `${baseUrl.replace(/\/$/, '')}/api/analyze-video`;
 
-    // 動画解析APIを非同期で呼び出す (記録の成否には影響させない)
-    axios.post(videoAnalysisUrl, { videoUrl }).catch(error => {
-      // ここでのエラーはログに出力するのみ
-      console.error('Failed to trigger video analysis:', error.message);
-    });
+    const analysisPayload = {
+      videoUrl,
+      userId,
+      userName: userName || null,
+      timestamp,
+      metadata: {
+        source: 'api/spreadsheet',
+        spreadsheetId,
+      },
+    };
+
+    const axiosConfig = {
+      timeout: Number(process.env.VIDEO_ANALYSIS_TIMEOUT_MS ?? 10000),
+    };
+
+    void axios
+      .post(videoAnalysisUrl, analysisPayload, axiosConfig)
+      .then(() => {
+        console.log('Video analysis webhook triggered successfully for', { userId, videoUrl });
+      })
+      .catch(error => {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error('Failed to trigger video analysis:', errorMsg);
+      });
 
     return NextResponse.json({ message: 'Successfully recorded in Spreadsheet' }, { status: 200 });
 

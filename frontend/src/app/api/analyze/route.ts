@@ -2,7 +2,6 @@ export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
 import { VideoIntelligenceServiceClient, protos } from '@google-cloud/video-intelligence';
-import { GoogleAuth } from 'google-auth-library';
 import { requireProjectId } from '@/lib/gcloud';
 
 import { getAuthClientFromEnv } from '@/lib/gcloud';

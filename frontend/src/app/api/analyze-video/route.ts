@@ -16,12 +16,15 @@ async function getVideoClient() {
 
 export async function POST(req: Request) {
   try {
-    const { gcsUri } = await req.json();
-    if (!gcsUri) {
-      return NextResponse.json({ ok: false, error: 'gcsUri is required.' }, { status: 400 });
+    const { gcsUri, videoUrl } = await req.json();
+    const inputUri = gcsUri ?? videoUrl;
+    if (!inputUri) {
+      return NextResponse.json({ ok: false, error: 'gcsUri or videoUrl is required.' }, { status: 400 });
     }
 
-    console.log(`Received request for GCS URI: ${gcsUri}, returning dummy data.`);
+    const sourceField = gcsUri ? 'gcsUri' : 'videoUrl';
+
+    console.log(`Received request for ${sourceField}: ${inputUri}, returning dummy data.`);
 
     // Note: This function currently returns dummy data.
     // To enable actual analysis, you would call getVideoClient() and use the client.
@@ -30,7 +33,7 @@ export async function POST(req: Request) {
       comment: "解析完了。\n\n1. 右ストレートの際に、少し顎が上がっている傾向が見られます。常に顎を引く意識を持つと、ディフェンスが安定します。\n\n2. フットワークは軽快ですが、パンチのインパクトの瞬間に足が止まると、よりパワーが拳に伝わります。\n\n3. コンビネーションの最後に左フックを返すと、相手の意識を散らすことができ、次の攻撃に繋げやすくなります。",
     };
 
-    return NextResponse.json({ ok: true, ...dummyResult });
+    return NextResponse.json({ ok: true, sourceField, inputUri, ...dummyResult });
 
   } catch (e: any) {
     console.error('Error in dummy video analysis:', e);

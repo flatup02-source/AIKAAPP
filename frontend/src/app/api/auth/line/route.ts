@@ -2,14 +2,46 @@ export const runtime = 'nodejs';
 
 import admin from 'firebase-admin';
 import axios from 'axios';
-import { NextResponse } from 'next/server'; // Import NextResponse for API responses
+import { NextResponse } from 'next/server';
 
 // Initialize Firebase Admin SDK if not already initialized
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault(), // Use applicationDefault for server-side
-  });
+let appInitialized = false;
+function initFirebase() {
+  if (appInitialized || admin.apps.length > 0) return;
+  
+  const rawCreds = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+  if (!rawCreds) {
+    console.error('GOOGLE_APPLICATION_CREDENTIALS_JSON is not set in environment variables');
+    throw new Error('Firebase Admin initialization failed: GOOGLE_APPLICATION_CREDENTIALS_JSON not found');
+  }
+
+  try {
+    // Handle both Base64-encoded and plain JSON
+    let serviceAccount: any;
+    try {
+      // Try to decode as Base64 first
+      const decoded = Buffer.from(rawCreds, 'base64').toString('utf-8');
+      serviceAccount = JSON.parse(decoded);
+      console.log('Firebase Admin: Used Base64-decoded credentials');
+    } catch (decodeError) {
+      // If Base64 decode fails, try parsing as plain JSON
+      serviceAccount = JSON.parse(rawCreds);
+      console.log('Firebase Admin: Used plain JSON credentials');
+    }
+    
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    appInitialized = true;
+    console.log('Firebase Admin initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize Firebase Admin:', error);
+    throw new Error(`Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
+
+// Don't initialize on module load - wait for first request
+// This allows the build to complete even if environment variables aren't set
 
 // Helper function (not exported as a route handler)
 async function createCustomToken(lineIdToken: string) {
@@ -35,7 +67,10 @@ async function createCustomToken(lineIdToken: string) {
 // POST handler for the API route
 export async function POST(request: Request) {
   try {
-    const { lineIdToken } = await request.json(); // Assuming lineIdToken is in the request body
+    // Ensure Firebase is initialized
+    initFirebase();
+    
+    const { lineIdToken } = await request.json();
 
     if (!lineIdToken) {
       return NextResponse.json({ error: 'LINE ID token is required' }, { status: 400 });
@@ -45,6 +80,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ firebaseCustomToken });
   } catch (error: any) {
     console.error('Error in LINE auth API route:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    const errorMessage = error?.message || 'Internal Server Error';
+    return NextResponse.json({ 
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? String(error) : undefined
+    }, { status: 500 });
   }
 }

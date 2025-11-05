@@ -1,2 +1,9 @@
 [build]
+  base = "."
+  publish = ".next"
+  command = "npm run build"
   environment = { NODE_OPTIONS = "--max-old-space-size=4096 --openssl-legacy-provider" }
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

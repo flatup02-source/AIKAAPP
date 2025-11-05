@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 
 import { env } from "@/env.mjs";
+import { getAuthClientFromEnv } from "@/lib/gcloud";
 
 export async function POST(req: NextRequest) {
   console.log("Received request to update spreadsheet.");
@@ -59,23 +60,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let credentials;
-    try {
-      credentials = JSON.parse(env.GOOGLE_CREDENTIALS_JSON);
-    } catch (error) {
-      console.error("Failed to parse GOOGLE_CREDENTIALS_JSON:", error);
-      return NextResponse.json(
-        { error: "Google credentials configuration error." },
-        { status: 500 }
-      );
-    }
+    // 認証クライアントを取得（非推奨のcredentials直接指定を避ける）
+    const authClient = await getAuthClientFromEnv([
+      "https://www.googleapis.com/auth/spreadsheets",
+    ]);
 
-    const auth = new google.auth.GoogleAuth({
-      credentials,
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    });
-
-    const sheets = google.sheets({ version: "v4", auth });
+    const sheets = google.sheets({ version: "v4", auth: authClient });
 
     const now = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
     

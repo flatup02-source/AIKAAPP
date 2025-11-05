@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   productionBrowserSourceMaps: true,
@@ -9,6 +10,13 @@ const nextConfig: NextConfig = {
         hostname: "ik.imagekit.io",
       },
     ],
+  },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@": path.join(__dirname, "src"),
+    };
+    return config;
   },
 };
 

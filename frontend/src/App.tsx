@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import FileUploader from './components/FileUploader';
 import DebugConsole from './components/DebugConsole';
 import PostUploadInfo from './components/PostUploadInfo';
+import SearchComponent from './components/SearchComponent';
 import { LogEntry, LogLevel } from './types';
 
 const App: React.FC = () => {
@@ -117,6 +118,10 @@ const App: React.FC = () => {
           errorDetails={postUploadError}
         />
       )}
+
+      <div className="w-full max-w-2xl mt-8">
+        <SearchComponent addLog={addLog} />
+      </div>
 
       <DebugConsole logs={logs} />
     </div>

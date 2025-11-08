@@ -1,0 +1,353 @@
+{
+  "name": "月額会費の自動請求",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 1 * *"
+            }
+          ]
+        }
+      },
+      "id": "monthly-trigger",
+      "name": "毎月1日トリガー",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.BACKEND_URL }}/api/n8n/data/members",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-n8n-api-key",
+              "value": "={{ $env.N8N_WEBHOOK_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-members",
+      "name": "アクティブ会員を取得",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "filter-active",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "active",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-active",
+      "name": "アクティブ会員をフィルタ",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "amount": "={{ $json.monthlyFee }}",
+        "currency": "jpy",
+        "description": "{{ $now.format('YYYY年MM月') }}の月額会費",
+        "customer": "={{ $json.stripeCustomerId }}",
+        "options": {
+          "metadata": {
+            "memberId": "={{ $json.id }}",
+            "month": "={{ $now.format('YYYY-MM') }}"
+          }
+        }
+      },
+      "id": "create-invoice",
+      "name": "Stripeで請求書作成",
+      "type": "n8n-nodes-base.stripe",
+      "typeVersion": 1,
+      "position": [850, 300],
+      "credentials": {
+        "stripeApi": {
+          "id": "4",
+          "name": "Stripe account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "請求履歴",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now }}",
+            "memberId": "={{ $json.memberId }}",
+            "memberName": "={{ $json.memberName }}",
+            "amount": "={{ $json.amount }}",
+            "status": "pending",
+            "invoiceId": "={{ $json.id }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "record-invoice",
+      "name": "請求履歴を記録",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [1050, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.FROM_EMAIL }}",
+        "toEmail": "={{ $json.email }}",
+        "subject": "{{ $now.format('YYYY年MM月') }}の月額会費のご請求",
+        "emailType": "html",
+        "message": "<p>いつもお世話になっております。</p><p>{{ $now.format('YYYY年MM月') }}の月額会費のご請求です。</p><p>金額: {{ $json.amount }}円</p><p>お支払いは以下のリンクからお願いいたします。</p><p><a href=\"{{ $json.hosted_invoice_url }}\">お支払いリンク</a></p>",
+        "options": {}
+      },
+      "id": "send-invoice-email",
+      "name": "請求書メール送信",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1250, 300],
+      "credentials": {
+        "smtp": {
+          "id": "5",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 5 * *"
+            }
+          ]
+        }
+      },
+      "id": "reminder-trigger",
+      "name": "毎月5日トリガー（未払い確認）",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 500]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "請求履歴",
+          "mode": "name"
+        },
+        "options": {
+          "range": "A:F"
+        }
+      },
+      "id": "get-unpaid",
+      "name": "未払い請求を取得",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [450, 500],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "filter-unpaid",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "pending",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-unpaid",
+      "name": "未払いをフィルタ",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [650, 500]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.FROM_EMAIL }}",
+        "toEmail": "={{ $json.email }}",
+        "subject": "【重要】月額会費の未払いについて",
+        "emailType": "html",
+        "message": "<p>いつもお世話になっております。</p><p>{{ $now.format('YYYY年MM月') }}の月額会費のお支払いがまだ確認できておりません。</p><p>お手数ですが、お支払いをお願いいたします。</p>",
+        "options": {}
+      },
+      "id": "send-reminder",
+      "name": "リマインダーメール送信",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [850, 500],
+      "credentials": {
+        "smtp": {
+          "id": "5",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "毎月1日トリガー": {
+      "main": [
+        [
+          {
+            "node": "アクティブ会員を取得",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "アクティブ会員を取得": {
+      "main": [
+        [
+          {
+            "node": "アクティブ会員をフィルタ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "アクティブ会員をフィルタ": {
+      "main": [
+        [
+          {
+            "node": "Stripeで請求書作成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stripeで請求書作成": {
+      "main": [
+        [
+          {
+            "node": "請求履歴を記録",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "請求履歴を記録": {
+      "main": [
+        [
+          {
+            "node": "請求書メール送信",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "毎月5日トリガー（未払い確認）": {
+      "main": [
+        [
+          {
+            "node": "未払い請求を取得",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "未払い請求を取得": {
+      "main": [
+        [
+          {
+            "node": "未払いをフィルタ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "未払いをフィルタ": {
+      "main": [
+        [
+          {
+            "node": "リマインダーメール送信",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

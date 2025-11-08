@@ -1,0 +1,281 @@
+{
+  "name": "LINE自動返信ボット",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "line-webhook",
+      "name": "LINE Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "line-bot"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-message-type",
+              "leftValue": "={{ $json.events[0].type }}",
+              "rightValue": "message",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-message",
+      "name": "メッセージイベントをフィルタ",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "chat",
+        "model": "gpt-4",
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "あなたは格闘技GYMのカスタマーサポートです。親切で丁寧に回答してください。\n\nよくある質問:\n- 営業時間: 平日 10:00-22:00、土日 9:00-20:00\n- 料金: 月額10,000円\n- レッスンスケジュール: 毎週月・水・金 19:00-21:00\n- 予約方法: LINEまたはWebフォームから\n\n複雑な質問や予約希望の場合は、担当者に転送してください。"
+            },
+            {
+              "role": "user",
+              "content": "={{ $json.events[0].message.text }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 500
+        }
+      },
+      "id": "openai-chat",
+      "name": "OpenAIで回答生成",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1.3,
+      "position": [650, 300],
+      "credentials": {
+        "openAiApi": {
+          "id": "6",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-transfer",
+              "leftValue": "={{ $json.message.content }}",
+              "rightValue": "転送",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-transfer",
+      "name": "転送が必要か確認",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.events[0].source.userId }}",
+        "message": "={{ $json.message.content }}"
+      },
+      "id": "send-reply",
+      "name": "LINEで返信",
+      "type": "n8n-nodes-base.line",
+      "typeVersion": 1,
+      "position": [1050, 200],
+      "credentials": {
+        "lineApi": {
+          "id": "3",
+          "name": "LINE account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.ADMIN_EMAIL }}",
+        "toEmail": "={{ $env.ADMIN_EMAIL }}",
+        "subject": "LINEからの問い合わせ - 担当者転送",
+        "emailType": "html",
+        "message": "<p>以下の問い合わせがLINEから届きました。対応をお願いします。</p><p>ユーザーID: {{ $json.events[0].source.userId }}</p><p>メッセージ: {{ $json.events[0].message.text }}</p>",
+        "options": {}
+      },
+      "id": "notify-admin",
+      "name": "担当者に通知",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1050, 400],
+      "credentials": {
+        "smtp": {
+          "id": "5",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.events[0].source.userId }}",
+        "message": "担当者に転送いたしました。後ほどご連絡いたします。"
+      },
+      "id": "send-transfer-notice",
+      "name": "転送通知を送信",
+      "type": "n8n-nodes-base.line",
+      "typeVersion": 1,
+      "position": [1250, 400],
+      "credentials": {
+        "lineApi": {
+          "id": "3",
+          "name": "LINE account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "問い合わせログ",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now }}",
+            "userId": "={{ $json.events[0].source.userId }}",
+            "message": "={{ $json.events[0].message.text }}",
+            "response": "={{ $json.message.content }}",
+            "transferred": "={{ $json.message.content.includes('転送') ? 'Yes' : 'No' }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "log-inquiry",
+      "name": "問い合わせをログに記録",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [850, 500],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "LINE Webhook": {
+      "main": [
+        [
+          {
+            "node": "メッセージイベントをフィルタ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "メッセージイベントをフィルタ": {
+      "main": [
+        [
+          {
+            "node": "OpenAIで回答生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAIで回答生成": {
+      "main": [
+        [
+          {
+            "node": "転送が必要か確認",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "問い合わせをログに記録",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "転送が必要か確認": {
+      "main": [
+        [
+          {
+            "node": "LINEで返信",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "担当者に通知",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "担当者に通知": {
+      "main": [
+        [
+          {
+            "node": "転送通知を送信",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

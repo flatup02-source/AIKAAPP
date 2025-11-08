@@ -1,0 +1,316 @@
+{
+  "name": "レッスン予約の自動化",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "lesson-booking"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.BACKEND_URL }}/api/n8n/webhook",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-n8n-api-key",
+              "value": "={{ $env.N8N_WEBHOOK_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "event",
+              "value": "lesson_booked"
+            },
+            {
+              "name": "data",
+              "value": "={{ $json.body }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-request",
+      "name": "バックエンドに通知",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "レッスン予約",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now }}",
+            "memberId": "={{ $json.body.memberId }}",
+            "memberName": "={{ $json.body.memberName }}",
+            "lessonDate": "={{ $json.body.lessonDate }}",
+            "lessonTime": "={{ $json.body.lessonTime }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "google-sheets",
+      "name": "Googleスプレッドシートに記録",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [650, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insertEvent",
+        "calendarId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_CALENDAR_ID }}",
+          "mode": "id"
+        },
+        "start": "={{ $json.body.lessonDate }}T{{ $json.body.lessonTime }}:00",
+        "end": "={{ $json.body.lessonDate }}T{{ $json.body.lessonTime + 1 }}:00",
+        "summary": "レッスン - {{ $json.body.memberName }}",
+        "description": "会員ID: {{ $json.body.memberId }}",
+        "options": {}
+      },
+      "id": "google-calendar",
+      "name": "Googleカレンダーに追加",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [850, 300],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "2",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.body.lineUserId }}",
+        "message": "レッスン予約が完了しました！\n\n日時: {{ $json.body.lessonDate }} {{ $json.body.lessonTime }}:00\n\n当日はお気をつけてお越しください。"
+      },
+      "id": "line-message",
+      "name": "LINEで確認メッセージ送信",
+      "type": "n8n-nodes-base.line",
+      "typeVersion": 1,
+      "position": [1050, 300],
+      "credentials": {
+        "lineApi": {
+          "id": "3",
+          "name": "LINE account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "前日リマインダー",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 500]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "レッスン予約",
+          "mode": "name"
+        },
+        "options": {
+          "range": "A:E"
+        }
+      },
+      "id": "get-tomorrow-lessons",
+      "name": "明日のレッスンを取得",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [450, 500],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "filter-tomorrow",
+              "leftValue": "={{ $json.lessonDate }}",
+              "rightValue": "={{ $now.toISOString().split('T')[0] }}",
+              "operator": {
+                "type": "date",
+                "operation": "equals",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter",
+      "name": "明日の予約をフィルタ",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [650, 500]
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.lineUserId }}",
+        "message": "明日のレッスンのリマインダーです！\n\n日時: {{ $json.lessonDate }} {{ $json.lessonTime }}:00\n\nお待ちしております！"
+      },
+      "id": "send-reminder",
+      "name": "リマインダー送信",
+      "type": "n8n-nodes-base.line",
+      "typeVersion": 1,
+      "position": [850, 500],
+      "credentials": {
+        "lineApi": {
+          "id": "3",
+          "name": "LINE account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "バックエンドに通知",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "バックエンドに通知": {
+      "main": [
+        [
+          {
+            "node": "Googleスプレッドシートに記録",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Googleスプレッドシートに記録": {
+      "main": [
+        [
+          {
+            "node": "Googleカレンダーに追加",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Googleカレンダーに追加": {
+      "main": [
+        [
+          {
+            "node": "LINEで確認メッセージ送信",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "前日リマインダー": {
+      "main": [
+        [
+          {
+            "node": "明日のレッスンを取得",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "明日のレッスンを取得": {
+      "main": [
+        [
+          {
+            "node": "明日の予約をフィルタ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "明日の予約をフィルタ": {
+      "main": [
+        [
+          {
+            "node": "リマインダー送信",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

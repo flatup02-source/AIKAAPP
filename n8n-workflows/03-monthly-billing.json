@@ -1,0 +1,208 @@
+{
+  "name": "月額会費自動請求",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 1 * *"
+            }
+          ]
+        }
+      },
+      "id": "monthly-trigger",
+      "name": "毎月1日9時に実行",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": "={{ $env.GOOGLE_SHEET_ID }}",
+        "sheetName": "会員管理",
+        "range": "A2:F100",
+        "options": {}
+      },
+      "id": "get-members",
+      "name": "アクティブ会員取得",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [450, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "filter-active",
+              "leftValue": "={{ $json.ステータス || $json[5] }}",
+              "rightValue": "アクティブ",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-active",
+      "name": "アクティブ会員をフィルタ",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 請求金額を計算\nconst items = $input.all();\n\nreturn items.map(item => {\n  const baseFee = 10000; // 基本料金\n  const extraClasses = parseInt(item.json['追加クラス数'] || item.json[4] || 0);\n  const extraFee = extraClasses * 2000; // 追加クラス料金（1クラス2000円）\n  const totalAmount = baseFee + extraFee;\n  \n  return {\n    json: {\n      ...item.json,\n      baseFee: baseFee,\n      extraClasses: extraClasses,\n      extraFee: extraFee,\n      totalAmount: totalAmount,\n      billingDate: $now.toFormat('yyyy-MM-dd'),\n      billingMonth: $now.toFormat('yyyy-MM')\n    }\n  };\n});"
+      },
+      "id": "calculate-fee",
+      "name": "請求金額計算",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "={{ $env.GOOGLE_SHEET_ID }}",
+        "sheetName": "請求管理",
+        "range": "A:G",
+        "options": {}
+      },
+      "id": "record-billing",
+      "name": "請求記録",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1050, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/push",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"to\": \"{{ $json.LINE_USER_ID || $json[2] }}\",\n  \"messages\": [\n    {\n      \"type\": \"text\",\n      \"text\": \"{{ $json.billingMonth }}月の会費請求のお知らせ\\n\\n請求金額: {{ $json.totalAmount }}円\\n内訳:\\n- 基本料金: {{ $json.baseFee }}円\\n- 追加クラス: {{ $json.extraFee }}円（{{ $json.extraClasses }}クラス）\\n\\nお支払いは以下のリンクからお願いします。\"\n    },\n    {\n      \"type\": \"template\",\n      \"altText\": \"支払いリンク\",\n      \"template\": {\n        \"type\": \"buttons\",\n        \"text\": \"お支払い\",\n        \"actions\": [\n          {\n            \"type\": \"uri\",\n            \"label\": \"支払う\",\n            \"uri\": \"https://your-site.netlify.app/payment?amount={{ $json.totalAmount }}&member={{ $json.userId }}\"\n          }\n        ]\n      }\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "send-billing-notice",
+      "name": "請求通知送信",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1250, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "LINE API",
+          "data": {
+            "name": "Authorization",
+            "value": "Bearer {{ $env.LINE_CHANNEL_ACCESS_TOKEN }}"
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "毎月1日9時に実行": {
+      "main": [
+        [
+          {
+            "node": "アクティブ会員取得",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "アクティブ会員取得": {
+      "main": [
+        [
+          {
+            "node": "アクティブ会員をフィルタ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "アクティブ会員をフィルタ": {
+      "main": [
+        [
+          {
+            "node": "請求金額計算",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "請求金額計算": {
+      "main": [
+        [
+          {
+            "node": "請求記録",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "請求通知送信",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "請求記録": {
+      "main": [
+        [
+          {
+            "node": "請求通知送信",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

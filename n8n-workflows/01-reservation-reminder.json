@@ -1,0 +1,163 @@
+{
+  "name": "レッスン予約リマインダー",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "毎日9時に実行",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": "={{ $env.GOOGLE_SHEET_ID }}",
+        "sheetName": "予約管理",
+        "range": "A2:E100",
+        "options": {}
+      },
+      "id": "google-sheets-read",
+      "name": "予約データ取得",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [450, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 翌日の予約をフィルタ\nconst tomorrow = new Date();\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst tomorrowStr = tomorrow.toISOString().split('T')[0];\n\nconst items = $input.all();\n\nreturn items.filter(item => {\n  const reservationDate = item.json['日付'] || item.json[0];\n  return reservationDate && reservationDate.toString().includes(tomorrowStr);\n}).map(item => ({ json: item.json }));"
+      },
+      "id": "code-filter",
+      "name": "翌日の予約をフィルタ",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/push",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"to\": \"{{ $json.LINE_USER_ID || $json[1] }}\",\n  \"messages\": [\n    {\n      \"type\": \"text\",\n      \"text\": \"明日のレッスンのリマインダーです。\\n時間: {{ $json.時間 || $json[2] }}\\nクラス: {{ $json.クラス名 || $json[3] }}\\n\\n参加されますか？\"\n    },\n    {\n      \"type\": \"template\",\n      \"altText\": \"予約確認\",\n      \"template\": {\n        \"type\": \"confirm\",\n        \"text\": \"参加しますか？\",\n        \"actions\": [\n          {\n            \"type\": \"message\",\n            \"label\": \"参加します\",\n            \"text\": \"参加します\"\n          },\n          {\n            \"type\": \"message\",\n            \"label\": \"キャンセル\",\n            \"text\": \"キャンセルします\"\n          }\n        ]\n      }\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "line-notification",
+      "name": "LINE通知送信",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "LINE API",
+          "data": {
+            "name": "Authorization",
+            "value": "Bearer {{ $env.LINE_CHANNEL_ACCESS_TOKEN }}"
+          }
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "={{ $env.GOOGLE_SHEET_ID }}",
+        "sheetName": "通知ログ",
+        "range": "A:D",
+        "options": {}
+      },
+      "id": "log-notification",
+      "name": "通知ログ記録",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1050, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "1",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "毎日9時に実行": {
+      "main": [
+        [
+          {
+            "node": "予約データ取得",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "予約データ取得": {
+      "main": [
+        [
+          {
+            "node": "翌日の予約をフィルタ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "翌日の予約をフィルタ": {
+      "main": [
+        [
+          {
+            "node": "LINE通知送信",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LINE通知送信": {
+      "main": [
+        [
+          {
+            "node": "通知ログ記録",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

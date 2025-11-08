@@ -1,0 +1,183 @@
+{
+  "name": "新規会員登録自動処理",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-member",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook受信",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "new-member"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"received\", \"timestamp\": $now.toISO() } }}"
+      },
+      "id": "webhook-response",
+      "name": "Webhook応答",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "={{ $env.GOOGLE_SHEET_ID }}",
+        "sheetName": "会員管理",
+        "range": "A:D",
+        "options": {}
+      },
+      "id": "google-sheets-append",
+      "name": "スプレッドシートに記録",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [650, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "1",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/push",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"to\": \"{{ $json.lineUserId }}\",\n  \"messages\": [\n    {\n      \"type\": \"text\",\n      \"text\": \"{{ $json.userName }}さん、ご登録ありがとうございます！\\n\\n初回レッスンの予約をお待ちしています。\\n体験レッスンは無料ですので、お気軽にお問い合わせください。\"\n    },\n    {\n      \"type\": \"template\",\n      \"altText\": \"次のステップ\",\n      \"template\": {\n        \"type\": \"buttons\",\n        \"text\": \"次は何をしますか？\",\n        \"actions\": [\n          {\n            \"type\": \"uri\",\n            \"label\": \"予約する\",\n            \"uri\": \"https://your-site.netlify.app/reservation\"\n          },\n          {\n            \"type\": \"uri\",\n            \"label\": \"料金を見る\",\n            \"uri\": \"https://your-site.netlify.app/pricing\"\n          }\n        ]\n      }\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "line-welcome",
+      "name": "LINE歓迎メッセージ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "LINE API",
+          "data": {
+            "name": "Authorization",
+            "value": "Bearer {{ $env.LINE_CHANNEL_ACCESS_TOKEN }}"
+          }
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "schedule-followup",
+              "leftValue": "={{ $json.lineUserId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-line-user",
+      "name": "LINEユーザーID確認",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [650, 500]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10 * * *"
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "id": "schedule-followup",
+      "name": "3日後のフォローアップ",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [1050, 300],
+      "notes": "新規会員登録から3日後にフォローアップメッセージを送信"
+    }
+  ],
+  "connections": {
+    "Webhook受信": {
+      "main": [
+        [
+          {
+            "node": "Webhook応答",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "スプレッドシートに記録",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "スプレッドシートに記録": {
+      "main": [
+        [
+          {
+            "node": "LINEユーザーID確認",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LINEユーザーID確認": {
+      "main": [
+        [
+          {
+            "node": "LINE歓迎メッセージ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

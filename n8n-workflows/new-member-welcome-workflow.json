@@ -1,0 +1,119 @@
+{
+  "name": "格闘技GYM - 新規会員ウェルカムフロー",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-member",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook受信",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "new-member-webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SITE_URL }}/api/n8n-webhook",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-n8n-secret",
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"action\": \"new_member\",\n  \"data\": {\n    \"userId\": \"{{ $json.body.userId }}\",\n    \"userName\": \"{{ $json.body.userName }}\",\n    \"email\": \"{{ $json.body.email }}\",\n    \"lineId\": \"{{ $json.body.lineId }}\",\n    \"membershipType\": \"{{ $json.body.membershipType }}\",\n    \"joinDate\": \"{{ $now.toISOString() }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "register-member",
+      "name": "会員を登録",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.body.lineId }}",
+        "text": "={{ 'こんにちは、' + $json.body.userName + 'さん！\\n\\n格闘技GYMへようこそ！\\n\\n会員登録が完了しました。\\n初回レッスンの予約をお待ちしております。\\n\\n何かご質問がございましたら、お気軽にお問い合わせください。' }}",
+        "options": {}
+      },
+      "id": "send-line-message",
+      "name": "LINEメッセージ送信",
+      "type": "n8n-nodes-base.line",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, message: 'Member registered and welcome message sent' } }}",
+        "options": {}
+      },
+      "id": "respond",
+      "name": "レスポンス",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Webhook受信": {
+      "main": [
+        [
+          {
+            "node": "会員を登録",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "会員を登録": {
+      "main": [
+        [
+          {
+            "node": "LINEメッセージ送信",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LINEメッセージ送信": {
+      "main": [
+        [
+          {
+            "node": "レスポンス",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

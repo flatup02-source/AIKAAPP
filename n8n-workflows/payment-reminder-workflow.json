@@ -1,0 +1,128 @@
+{
+  "name": "格闘技GYM - 会費請求リマインダー",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 1 * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "毎月1日 9時に実行",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "会員管理",
+          "mode": "list"
+        },
+        "range": "A:F",
+        "options": {}
+      },
+      "id": "read-members",
+      "name": "会員リストを取得",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 会員リストを処理し、会費請求が必要な会員をフィルタリング\nconst items = $input.all();\nconst today = new Date();\nconst currentMonth = today.getMonth() + 1;\n\nconst membersToBill = items\n  .map(item => item.json)\n  .filter(member => {\n    // 会員ステータスが有効な場合のみ\n    // 最終請求月が今月でない場合\n    return member[5] === '有効'; // ステータス列\n  })\n  .map(member => ({\n    userId: member[1],\n    userName: member[2],\n    email: member[3],\n    lineId: member[4],\n    membershipType: member[5],\n    amount: getMembershipFee(member[5]), // 会員タイプに応じた会費\n    dueDate: getDueDate(currentMonth)\n  }));\n\nfunction getMembershipFee(type) {\n  const fees = {\n    '月額': 10000,\n    '年額': 100000,\n    '回数券': 5000\n  };\n  return fees[type] || 10000;\n}\n\nfunction getDueDate(month) {\n  const year = new Date().getFullYear();\n  return `${year}-${String(month).padStart(2, '0')}-10`;\n}\n\nreturn membersToBill.map(member => ({ json: member }));"
+      },
+      "id": "process-members",
+      "name": "会員を処理",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SITE_URL }}/api/n8n-webhook",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-n8n-secret",
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"action\": \"payment_reminder\",\n  \"data\": {\n    \"userId\": \"{{ $json.userId }}\",\n    \"userName\": \"{{ $json.userName }}\",\n    \"email\": \"{{ $json.email }}\",\n    \"lineId\": \"{{ $json.lineId }}\",\n    \"amount\": {{ $json.amount }},\n    \"dueDate\": \"{{ $json.dueDate }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "send-webhook",
+      "name": "Webhookを送信",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "毎月1日 9時に実行": {
+      "main": [
+        [
+          {
+            "node": "会員リストを取得",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "会員リストを取得": {
+      "main": [
+        [
+          {
+            "node": "会員を処理",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "会員を処理": {
+      "main": [
+        [
+          {
+            "node": "Webhookを送信",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

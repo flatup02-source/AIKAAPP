@@ -1,0 +1,128 @@
+{
+  "name": "格闘技GYM - レッスンリマインダー",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "daily-trigger",
+      "name": "毎日9時に実行",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "レッスン予約",
+          "mode": "list"
+        },
+        "range": "A:G",
+        "options": {}
+      },
+      "id": "read-bookings",
+      "name": "予約リストを取得",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 明日のレッスン予約をフィルタリング\nconst items = $input.all();\nconst tomorrow = new Date();\ntomorrow.setDate(tomorrow.getDate() + 1);\nconst tomorrowStr = tomorrow.toISOString().split('T')[0];\n\nconst tomorrowBookings = items\n  .map(item => item.json)\n  .filter(booking => {\n    const bookingDate = booking[2]; // 日付列\n    return bookingDate === tomorrowStr;\n  })\n  .map(booking => ({\n    userId: booking[0],\n    userName: booking[1],\n    lessonDate: booking[2],\n    lessonTime: booking[3],\n    lessonName: booking[4],\n    email: booking[5],\n    lineId: booking[6]\n  }));\n\nreturn tomorrowBookings.map(booking => ({ json: booking }));"
+      },
+      "id": "filter-tomorrow",
+      "name": "明日の予約をフィルタ",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SITE_URL }}/api/n8n-webhook",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-n8n-secret",
+              "value": "={{ $env.N8N_WEBHOOK_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"action\": \"lesson_reminder\",\n  \"data\": {\n    \"userId\": \"{{ $json.userId }}\",\n    \"userName\": \"{{ $json.userName }}\",\n    \"email\": \"{{ $json.email }}\",\n    \"lineId\": \"{{ $json.lineId }}\",\n    \"lessonName\": \"{{ $json.lessonName }}\",\n    \"lessonDate\": \"{{ $json.lessonDate }}\",\n    \"lessonTime\": \"{{ $json.lessonTime }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "send-reminder",
+      "name": "リマインダーを送信",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "毎日9時に実行": {
+      "main": [
+        [
+          {
+            "node": "予約リストを取得",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "予約リストを取得": {
+      "main": [
+        [
+          {
+            "node": "明日の予約をフィルタ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "明日の予約をフィルタ": {
+      "main": [
+        [
+          {
+            "node": "リマインダーを送信",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

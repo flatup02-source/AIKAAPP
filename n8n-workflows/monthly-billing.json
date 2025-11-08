@@ -1,0 +1,175 @@
+{
+  "name": "月次会費の自動請求",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 1 * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger - 毎月1日9時",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": "会員リスト",
+        "range": "A2:F1000",
+        "options": {}
+      },
+      "id": "get-active-members",
+      "name": "Google Sheets - アクティブ会員取得",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// アクティブ会員のみをフィルタリング\nconst items = $input.all();\nconst activeMembers = items.filter(item => {\n  const status = item.json['ステータス'] || item.json[4];\n  return status === 'アクティブ' || status === 'active';\n});\n\nreturn activeMembers.map(item => ({\n  json: {\n    userId: item.json['会員ID'] || item.json[1],\n    name: item.json['氏名'] || item.json[2],\n    email: item.json['メールアドレス'] || item.json[3],\n    monthlyFee: 10000, // 月額会費（円）\n    billingDate: $now.toISOString().split('T')[0]\n  }\n}));"
+      },
+      "id": "filter-active-members",
+      "name": "Code - アクティブ会員フィルタ",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "resource": "invoice",
+        "operation": "create",
+        "customer": "={{ $json.userId }}",
+        "amount": "={{ $json.monthlyFee }}",
+        "currency": "jpy",
+        "description": "={{ '月額会費 - ' + $json.billingDate }}",
+        "additionalFields": {}
+      },
+      "id": "create-invoice",
+      "name": "Stripe - 請求書作成",
+      "type": "n8n-nodes-base.stripe",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEET_ID }}",
+          "mode": "id"
+        },
+        "sheetName": "請求履歴",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "請求日": "={{ $json.billingDate }}",
+            "会員ID": "={{ $json.userId }}",
+            "氏名": "={{ $json.name }}",
+            "金額": "={{ $json.monthlyFee }}",
+            "ステータス": "請求済み",
+            "請求書ID": "={{ $('Stripe - 請求書作成').item.json.id }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "record-billing",
+      "name": "Google Sheets - 請求履歴記録",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "sendMessage",
+        "to": "={{ $json.userId }}",
+        "messageType": "text",
+        "text": "={{ $json.name + 'さん\n\n今月の会費（' + $json.monthlyFee + '円）の請求書をお送りしました。\n\nお支払いは以下のリンクからお願いします。\n\nご不明な点がございましたら、お気軽にお問い合わせください。' }}"
+      },
+      "id": "send-notification",
+      "name": "LINE Bot - 請求通知",
+      "type": "n8n-nodes-base.line",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger - 毎月1日9時": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - アクティブ会員取得",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - アクティブ会員取得": {
+      "main": [
+        [
+          {
+            "node": "Code - アクティブ会員フィルタ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - アクティブ会員フィルタ": {
+      "main": [
+        [
+          {
+            "node": "Stripe - 請求書作成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stripe - 請求書作成": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - 請求履歴記録",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - 請求履歴記録": {
+      "main": [
+        [
+          {
+            "node": "LINE Bot - 請求通知",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

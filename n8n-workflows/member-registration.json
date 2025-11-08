@@ -1,0 +1,147 @@
+{
+  "name": "新規会員登録時の自動処理",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "member-registration"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $env.GOOGLE_SHEET_ID }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "登録日時": "={{ $now }}",
+            "会員ID": "={{ $json.body.userId }}",
+            "氏名": "={{ $json.body.name }}",
+            "メールアドレス": "={{ $json.body.email }}",
+            "電話番号": "={{ $json.body.phone }}",
+            "LINE ID": "={{ $json.body.lineId }}",
+            "ステータス": "新規登録"
+          }
+        },
+        "options": {}
+      },
+      "id": "google-sheets",
+      "name": "Google Sheets - 会員情報記録",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "collection": "members",
+        "fields": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "userId": "={{ $json.body.userId }}",
+            "name": "={{ $json.body.name }}",
+            "email": "={{ $json.body.email }}",
+            "phone": "={{ $json.body.phone }}",
+            "lineId": "={{ $json.body.lineId }}",
+            "status": "active",
+            "registrationDate": "={{ $now }}"
+          }
+        }
+      },
+      "id": "firebase",
+      "name": "Firebase - 会員データ保存",
+      "type": "n8n-nodes-base.firebase",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "sendMessage",
+        "to": "={{ $json.body.lineId }}",
+        "messageType": "text",
+        "text": "={{ 'こんにちは、' + $json.body.name + 'さん！\n\n格闘技GYMへのご登録ありがとうございます。\n\n初回レッスンのご予約はこちらからお願いします。\n\n何かご質問がございましたら、お気軽にお問い合わせください。' }}"
+      },
+      "id": "line-bot",
+      "name": "LINE Bot - ウェルカムメッセージ",
+      "type": "n8n-nodes-base.line",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"status\": \"success\", \"message\": \"会員登録が完了しました\" } }}",
+        "options": {}
+      },
+      "id": "respond-to-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - 会員情報記録",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - 会員情報記録": {
+      "main": [
+        [
+          {
+            "node": "Firebase - 会員データ保存",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Firebase - 会員データ保存": {
+      "main": [
+        [
+          {
+            "node": "LINE Bot - ウェルカムメッセージ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LINE Bot - ウェルカムメッセージ": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

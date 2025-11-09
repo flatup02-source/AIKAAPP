@@ -160,6 +160,135 @@ app.get('/api/n8n/data/:type', async (req, res) => {
   }
 });
 
+// AIKA18用のDify連携API
+app.post('/api/aika18/chat', async (req, res) => {
+  try {
+    const { message, userId } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+    
+    const difyApiKey = process.env.DIFY_API_KEY;
+    const difyApiUrl = process.env.DIFY_API_URL || 'https://api.dify.ai/v1';
+    
+    if (!difyApiKey) {
+      return res.status(500).json({ error: 'Dify API key is not configured' });
+    }
+    
+    // Dify APIにリクエストを送信
+    const response = await fetch(`${difyApiUrl}/chat-messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${difyApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs: {},
+        query: message,
+        response_mode: 'blocking',
+        user: userId || 'anonymous',
+        conversation_id: req.body.conversationId || undefined,
+      }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Dify API error:', errorText);
+      return res.status(response.status).json({ 
+        error: 'Dify API error',
+        details: errorText 
+      });
+    }
+    
+    const data = await response.json();
+    
+    res.json({
+      success: true,
+      message: data.answer,
+      conversationId: data.conversation_id,
+    });
+    
+  } catch (error) {
+    console.error('Error calling Dify API:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message 
+    });
+  }
+});
+
+// AIKA18用の動画解析結果をDifyに送信
+app.post('/api/aika18/video-analysis', async (req, res) => {
+  try {
+    const { videoAnalysisResult, userId } = req.body;
+    
+    if (!videoAnalysisResult) {
+      return res.status(400).json({ error: 'Video analysis result is required' });
+    }
+    
+    const difyApiKey = process.env.DIFY_API_KEY;
+    const difyApiUrl = process.env.DIFY_API_URL || 'https://api.dify.ai/v1';
+    
+    if (!difyApiKey) {
+      return res.status(500).json({ error: 'Dify API key is not configured' });
+    }
+    
+    // 動画解析結果をAIKA18のプロンプトに合わせてフォーマット
+    const analysisPrompt = `以下の動画解析結果を基に、AIKA18として戦闘力を数値化し、辛口で指導してください。
+
+動画解析結果:
+${JSON.stringify(videoAnalysisResult, null, 2)}
+
+レジェンドファイター基準:
+- 平均プロレベル: 100ポイント
+- エリートレベル: 130ポイント
+- チャンピオンレベル: 150ポイント
+
+戦闘力を「XXポイント（レジェンドファイター平均のYY%）」の形式で表示し、具体的な改善点を指摘してください。`;
+    
+    // Dify APIにリクエストを送信
+    const response = await fetch(`${difyApiUrl}/chat-messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${difyApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs: {},
+        query: analysisPrompt,
+        response_mode: 'blocking',
+        user: userId || 'anonymous',
+        conversation_id: req.body.conversationId || undefined,
+      }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Dify API error:', errorText);
+      return res.status(response.status).json({ 
+        error: 'Dify API error',
+        details: errorText 
+      });
+    }
+    
+    const data = await response.json();
+    
+    res.json({
+      success: true,
+      message: data.answer,
+      conversationId: data.conversation_id,
+    });
+    
+  } catch (error) {
+    console.error('Error calling Dify API for video analysis:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message 
+    });
+  }
+});
+
 // Cloud Run はポート環境変数に従う必要あり
 const port = process.env.PORT || 8080;
 app.listen(port, '0.0.0.0', () => {

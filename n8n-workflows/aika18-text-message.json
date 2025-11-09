@@ -1,0 +1,177 @@
+{
+  "name": "AIKA18 LINEボット - テキストメッセージ処理",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "line-webhook",
+      "name": "LINE Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "aika18-line-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-message-type",
+              "leftValue": "={{ $json.events[0].type }}",
+              "rightValue": "message",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-message",
+      "name": "メッセージイベントをフィルタ",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-text-type",
+              "leftValue": "={{ $json.events[0].message.type }}",
+              "rightValue": "text",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-text",
+      "name": "テキストメッセージをフィルタ",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.BACKEND_URL }}/api/aika18/chat",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ $json.events[0].message.text }}"
+            },
+            {
+              "name": "userId",
+              "value": "={{ $json.events[0].source.userId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "call-aika18-api",
+      "name": "AIKA18 API呼び出し",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "message",
+        "operation": "replyMessage",
+        "replyToken": "={{ $json.events[0].replyToken }}",
+        "message": "={{ $json.message }}",
+        "options": {}
+      },
+      "id": "reply-line",
+      "name": "LINEに返信",
+      "type": "n8n-nodes-base.line",
+      "typeVersion": 1,
+      "position": [1050, 300],
+      "credentials": {
+        "lineApi": {
+          "id": "1",
+          "name": "LINE Messaging API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "LINE Webhook": {
+      "main": [
+        [
+          {
+            "node": "メッセージイベントをフィルタ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "メッセージイベントをフィルタ": {
+      "main": [
+        [
+          {
+            "node": "テキストメッセージをフィルタ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "テキストメッセージをフィルタ": {
+      "main": [
+        [
+          {
+            "node": "AIKA18 API呼び出し",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AIKA18 API呼び出し": {
+      "main": [
+        [
+          {
+            "node": "LINEに返信",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

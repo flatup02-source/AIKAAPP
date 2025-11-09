@@ -110,7 +110,27 @@ export async function POST(req: NextRequest) {
           const aika18Response = await axios.post(`${backendUrl}/api/aika18/video-analysis`, {
             videoAnalysisResult: analysisResult,
             userId: userId,
+            videoDurationMinutes: 1, // 実際の動画時間を計算して設定
           });
+          
+          // 使用量上限に達した場合のエラーハンドリング
+          if (aika18Response.status === 503) {
+            await axios.post('https://api.line.me/v2/bot/message/reply', {
+              replyToken: event.replyToken,
+              messages: [
+                {
+                  type: 'text',
+                  text: aika18Response.data.message || '申し訳ございませんが、現在動画解析サービスが利用制限に達しています。来月までお待ちください。',
+                },
+              ],
+            }, {
+              headers: {
+                'Authorization': `Bearer ${lineChannelAccessToken}`,
+                'Content-Type': 'application/json',
+              },
+            });
+            continue;
+          }
           
           const aika18Message = aika18Response.data.message;
           

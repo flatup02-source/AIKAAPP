@@ -1,0 +1,260 @@
+{
+  "name": "使用量監視と自動停止",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "hourly-check",
+      "name": "1時間ごとにチェック",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.BACKEND_URL }}/api/usage",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": []
+        },
+        "options": {}
+      },
+      "id": "get-usage",
+      "name": "使用量を取得",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-stopped",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "stopped",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-stopped-services",
+      "name": "停止状態のサービスをチェック",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "alert-message",
+              "name": "alertMessage",
+              "value": "={{ $json.service }}の使用量が上限に達しました。\n現在: {{ $json.currentUsage }}/{{ $json.limit }} ({{ $json.percentage }}%)\nサービスは自動的に停止されました。",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "format-alert",
+      "name": "アラートメッセージをフォーマット",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $env.ADMIN_LINE_USER_ID }}",
+        "message": "={{ $json.alertMessage }}",
+        "options": {}
+      },
+      "id": "send-line-alert",
+      "name": "LINEでアラート送信",
+      "type": "n8n-nodes-base.line",
+      "typeVersion": 1,
+      "position": [1050, 300],
+      "credentials": {
+        "lineApi": {
+          "id": "1",
+          "name": "LINE Messaging API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-warning",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "warning",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-warning-services",
+      "name": "警告状態のサービスをチェック",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [650, 500]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "warning-message",
+              "name": "warningMessage",
+              "value": "={{ $json.service }}の使用量が警告レベルに達しました。\n現在: {{ $json.currentUsage }}/{{ $json.limit }} ({{ $json.percentage }}%)\n上限に近づいています。",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "format-warning",
+      "name": "警告メッセージをフォーマット",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [850, 500]
+    },
+    {
+      "parameters": {
+        "authentication": "accessToken",
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $env.ADMIN_LINE_USER_ID }}",
+        "message": "={{ $json.warningMessage }}",
+        "options": {}
+      },
+      "id": "send-warning",
+      "name": "LINEで警告送信",
+      "type": "n8n-nodes-base.line",
+      "typeVersion": 1,
+      "position": [1050, 500],
+      "credentials": {
+        "lineApi": {
+          "id": "1",
+          "name": "LINE Messaging API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "1時間ごとにチェック": {
+      "main": [
+        [
+          {
+            "node": "使用量を取得",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "使用量を取得": {
+      "main": [
+        [
+          {
+            "node": "停止状態のサービスをチェック",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "警告状態のサービスをチェック",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "停止状態のサービスをチェック": {
+      "main": [
+        [
+          {
+            "node": "アラートメッセージをフォーマット",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "アラートメッセージをフォーマット": {
+      "main": [
+        [
+          {
+            "node": "LINEでアラート送信",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "警告状態のサービスをチェック": {
+      "main": [
+        [
+          {
+            "node": "警告メッセージをフォーマット",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "警告メッセージをフォーマット": {
+      "main": [
+        [
+          {
+            "node": "LINEで警告送信",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}

@@ -1,6 +1,7 @@
 // filename: server.js
 
 import express from 'express';
+import { recordUsage, getUsage, getAllUsage, isServiceStopped } from './usage-monitor.js';
 
 // セキュリティ: 許可するオリジンを限定
 const allowedOrigins = [
@@ -160,6 +161,28 @@ app.get('/api/n8n/data/:type', async (req, res) => {
   }
 });
 
+// 使用量監視API
+app.get('/api/usage/:service', async (req, res) => {
+  try {
+    const { service } = req.params;
+    const usage = await getUsage(service);
+    res.json(usage);
+  } catch (error) {
+    console.error('Error getting usage:', error);
+    res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
+});
+
+app.get('/api/usage', async (req, res) => {
+  try {
+    const allUsage = await getAllUsage();
+    res.json(allUsage);
+  } catch (error) {
+    console.error('Error getting all usage:', error);
+    res.status(500).json({ error: 'Internal server error', message: error.message });
+  }
+});
+
 // AIKA18用のDify連携API
 app.post('/api/aika18/chat', async (req, res) => {
   try {
@@ -167,6 +190,16 @@ app.post('/api/aika18/chat', async (req, res) => {
     
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
+    }
+    
+    // 使用量チェック: Dify APIが停止していないか確認
+    const difyStopped = await isServiceStopped('dify_api_calls');
+    if (difyStopped) {
+      return res.status(503).json({ 
+        error: 'Service temporarily unavailable',
+        message: 'Dify APIの使用量上限に達しました。来月までお待ちください。',
+        service: 'dify_api_calls'
+      });
     }
     
     const difyApiKey = process.env.DIFY_API_KEY;
@@ -203,10 +236,24 @@ app.post('/api/aika18/chat', async (req, res) => {
     
     const data = await response.json();
     
+    // 使用量を記録
+    const usageResult = await recordUsage('dify_api_calls', 1);
+    
+    // 停止状態になった場合は警告を返す
+    if (usageResult.shouldStop) {
+      console.warn('Dify API usage limit reached. Service stopped.');
+    }
+    
     res.json({
       success: true,
       message: data.answer,
       conversationId: data.conversation_id,
+      usage: {
+        current: usageResult.currentUsage,
+        limit: usageResult.limit,
+        status: usageResult.status,
+        percentage: usageResult.percentage
+      }
     });
     
   } catch (error) {
@@ -221,10 +268,30 @@ app.post('/api/aika18/chat', async (req, res) => {
 // AIKA18用の動画解析結果をDifyに送信
 app.post('/api/aika18/video-analysis', async (req, res) => {
   try {
-    const { videoAnalysisResult, userId } = req.body;
+    const { videoAnalysisResult, userId, videoDurationMinutes } = req.body;
     
     if (!videoAnalysisResult) {
       return res.status(400).json({ error: 'Video analysis result is required' });
+    }
+    
+    // 使用量チェック: GCP Video Intelligence APIが停止していないか確認
+    const videoStopped = await isServiceStopped('gcp_video_minutes');
+    if (videoStopped) {
+      return res.status(503).json({ 
+        error: 'Service temporarily unavailable',
+        message: '動画解析サービスの使用量上限に達しました。来月までお待ちください。',
+        service: 'gcp_video_minutes'
+      });
+    }
+    
+    // 使用量チェック: Dify APIが停止していないか確認
+    const difyStopped = await isServiceStopped('dify_api_calls');
+    if (difyStopped) {
+      return res.status(503).json({ 
+        error: 'Service temporarily unavailable',
+        message: 'Dify APIの使用量上限に達しました。来月までお待ちください。',
+        service: 'dify_api_calls'
+      });
     }
     
     const difyApiKey = process.env.DIFY_API_KEY;
@@ -274,10 +341,34 @@ ${JSON.stringify(videoAnalysisResult, null, 2)}
     
     const data = await response.json();
     
+    // 使用量を記録（動画解析時間とDify API呼び出し）
+    const videoMinutes = videoDurationMinutes || 1; // デフォルト1分
+    const videoUsage = await recordUsage('gcp_video_minutes', videoMinutes);
+    const difyUsage = await recordUsage('dify_api_calls', 1);
+    
+    // 停止状態になった場合は警告を返す
+    if (videoUsage.shouldStop || difyUsage.shouldStop) {
+      console.warn('Usage limit reached. Service stopped.');
+    }
+    
     res.json({
       success: true,
       message: data.answer,
       conversationId: data.conversation_id,
+      usage: {
+        video: {
+          current: videoUsage.currentUsage,
+          limit: videoUsage.limit,
+          status: videoUsage.status,
+          percentage: videoUsage.percentage
+        },
+        dify: {
+          current: difyUsage.currentUsage,
+          limit: difyUsage.limit,
+          status: difyUsage.status,
+          percentage: difyUsage.percentage
+        }
+      }
     });
     
   } catch (error) {
@@ -286,6 +377,27 @@ ${JSON.stringify(videoAnalysisResult, null, 2)}
       error: 'Internal server error',
       message: error.message 
     });
+  }
+});
+
+// 使用量リセットAPI（月初めに実行）
+app.post('/api/usage/reset', async (req, res) => {
+  try {
+    // 認証チェック（管理者のみ）
+    const apiKey = req.headers['x-admin-api-key'];
+    const expectedApiKey = process.env.ADMIN_API_KEY;
+    
+    if (expectedApiKey && apiKey !== expectedApiKey) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    const { resetMonthlyUsage } = await import('./usage-monitor.js');
+    const result = await resetMonthlyUsage();
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Error resetting usage:', error);
+    res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 });
 

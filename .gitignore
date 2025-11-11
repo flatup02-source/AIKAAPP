@@ -28,3 +28,8 @@ frontend/.next/
 
 # Other
 dummy_100kb.mp4
+.next/
+node_modules/
+dist/
+service-account-key.json
+google-credentials.json

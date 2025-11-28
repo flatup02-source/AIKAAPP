@@ -1,2 +1,15 @@
+# /netlify.toml (プロジェクトのルートに配置する【最終確定版・最適化版】)
+
 [build]
-  environment = { NODE_OPTIONS = "--max-old-space-size=4096" }
+  base = "frontend"
+  command = "npm install && npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Optional redirect for SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

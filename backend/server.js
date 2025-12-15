@@ -12,10 +12,23 @@ import { lineService } from './services/line.js';
 dotenv.config();
 
 const app = express();
-// Security: Allow all origins for development/testing
-app.use(cors());
-// const allowedOrigins = [...]; // Disable strict check for now
-app.use(express.json());
+// Security: Restrict origins in production
+const allowedOrigins = [
+  'https://boisterous-rugelach-35df7a.netlify.app', // Production
+  'http://localhost:3000', // Local Dev
+  'http://localhost:3001'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps/curl) or allowed origins
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+}));
 
 // Health Check
 app.get('/', (req, res) => {

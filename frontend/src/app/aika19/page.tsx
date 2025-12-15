@@ -148,9 +148,11 @@ export default function AIKA19Page() {
 
     return (
         <div className="min-h-screen relative overflow-hidden bg-[#0f172a] text-white font-sans">
-            <div className="absolute top-0 left-0 w-full bg-red-600 text-white text-xs font-bold text-center py-1 z-50">
-                🚀 DEV MODE: NEW ARCHITECTURE (Cloudflare R2 + Gemini)
-            </div>
+            {process.env.NODE_ENV === 'development' && (
+                <div className="absolute top-0 left-0 w-full bg-red-600 text-white text-xs font-bold text-center py-1 z-50">
+                    🚀 DEV MODE: NEW ARCHITECTURE (Cloudflare R2 + Gemini)
+                </div>
+            )}
             {/* Background Effects */}
             <div className="absolute top-[-20%] left-[-20%] w-[50%] h-[50%] rounded-full bg-purple-600 blur-[120px] opacity-30 animate-pulse"></div>
             <div className="absolute bottom-[-20%] right-[-20%] w-[50%] h-[50%] rounded-full bg-blue-600 blur-[120px] opacity-30 animate-pulse delay-1000"></div>

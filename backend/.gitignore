@@ -1,0 +1,4 @@
+.env
+usage.json
+node_modules
+test-r2.js

@@ -1,68 +1,103 @@
-// filename: server.js
-
 import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { pipeline } from 'stream/promises';
+import { circuitBreaker } from './circuitBreaker.js';
+import { r2Service } from './services/r2.js';
+import { geminiService } from './services/gemini.js';
+import { lineService } from './services/line.js';
 
-// セキュリティ: 許可するオリジンを限定
-const allowedOrigins = [
-  'https://serene-zabaione-8c4e2a.netlify.app',
-];
-
-// 可変なプレビューURLに対応したい場合のカスタム判定
-function isAllowedOrigin(origin) {
-  if (!origin) return false;
-  if (allowedOrigins.includes(origin)) return true;
-  // Netlifyプレビュー: https://deploy-preview-123--serene-zabaione-8c4e2a.netlify.app の形式
-  const previewPattern = /^https:\/\/deploy-preview-\d+--serene-zabaione-8c4e2a\.netlify\.app$/;
-  return previewPattern.test(origin);
-}
+dotenv.config();
 
 const app = express();
-
-// 認証付きリクエストも許可するため、credentials:true を使う場合は
-// Access-Control-Allow-Origin にワイルドカード(*)は使えない。Originごとに返す必要がある
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (isAllowedOrigin(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Vary', 'Origin'); // CDN経由のキャッシュ汚染防止
-    res.header('Access-Control-Allow-Credentials', 'true'); // Cookie/Authorizationヘッダ利用時
-  }
-  res.header(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
-  );
-  res.header(
-    'Access-Control-Allow-Methods',
-    'GET, POST, PUT, PATCH, DELETE, OPTIONS'
-  );
-  next();
-});
-
-// Preflight (OPTIONS) 明示対応
-app.options('*', (req, res) => {
-  // 上でヘッダを付けているので、そのまま200で返す
-  res.status(200).send('OK');
-});
-
+// Security: Allow all origins for development/testing
+app.use(cors());
+// const allowedOrigins = [...]; // Disable strict check for now
 app.use(express.json());
 
-// Root health check for Cloud Run
+// Health Check
 app.get('/', (req, res) => {
-  res.status(200).send('OK');
+  res.status(200).send('AIKA Backend is running');
 });
 
-// 例: API ルート
-app.get('/health', (req, res) => {
-  res.json({ ok: true, ts: Date.now() });
+// 1. Request Upload URL
+app.post('/api/upload-request', async (req, res) => {
+  try {
+    // Safety Check
+    if (!circuitBreaker.checkLimit()) {
+      return res.status(429).json({
+        error: 'Daily limit reached',
+        message: '本日の解析受付は終了しました。また明日お試しください。'
+      });
+    }
+
+    const { fileName, contentType } = req.body;
+    // Generate unique key
+    const uniqueKey = `videos/${Date.now()}_${fileName || 'video.mp4'}`;
+
+    // Get Presigned URL
+    const uploadUrl = await r2Service.getUploadUrl(uniqueKey, contentType);
+
+    res.json({ uploadUrl, fileKey: uniqueKey });
+  } catch (error) {
+    console.error('Upload Request Error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 });
 
-app.post('/api/upload', (req, res) => {
-  // 実際の処理をここで行う（例: GCS に書き込みなど）
-  // 成功レスポンス
-  res.json({ status: 'uploaded' });
+// 2. Trigger Analysis
+app.post('/api/analyze', async (req, res) => {
+  const { fileKey, userId } = req.body;
+
+  if (!fileKey || !userId) {
+    return res.status(400).json({ error: 'Missing fileKey or userId' });
+  }
+
+  // Double check limit before committing resources
+  if (!circuitBreaker.checkLimit()) {
+    // Even if they uploaded, we can't analyze.
+    // Notify user immediately via response
+    return res.status(429).json({ message: '本日の受付は終了しました' });
+  }
+
+  // Record Usage immediately to reserve slot (or after success? Standard is leaky bucket, but for strict cost, reserve now).
+  circuitBreaker.recordUsage('GEMINI_ANALYSIS', 0); // Cost updated later if needed, or fixed 1 unit
+
+  // Return immediately to client so LIFF doesn't hang
+  res.status(202).json({ message: 'Analysis started', status: 'processing' });
+
+  // Async Processing
+  (async () => {
+    const tempFilePath = path.join('/tmp', path.basename(fileKey));
+    try {
+      console.log(`Starting analysis for ${fileKey}...`);
+
+      // 1. Download from R2
+      const s3Stream = await r2Service.getFileStream(fileKey);
+      await pipeline(s3Stream, fs.createWriteStream(tempFilePath));
+      console.log('Downloaded to', tempFilePath);
+
+      // 2. OpenAI/Gemini Analysis
+      const resultText = await geminiService.analyzeVideo(tempFilePath);
+      console.log('Analysis result:', resultText.slice(0, 50) + '...');
+
+      // 3. Push to LINE
+      await lineService.pushMessage(userId, "【解析完了】\n" + resultText);
+
+    } catch (error) {
+      console.error('Async Analysis Error:', error);
+      await lineService.pushMessage(userId, "【エラー】\n動画の解析中にエラーが発生しました。もう一度お試しください。");
+    } finally {
+      // Cleanup
+      if (fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+      }
+    }
+  })();
 });
 
-// Cloud Run はポート環境変数に従う必要あり
 const port = process.env.PORT || 8080;
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server listening on port ${port}`);

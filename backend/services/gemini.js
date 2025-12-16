@@ -4,6 +4,11 @@ import fs from 'fs';
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Fix: Force set GOOGLE_PROJECT_ID to prevent GoogleAuth error in certain environments
+if (!process.env.GOOGLE_PROJECT_ID) {
+    process.env.GOOGLE_PROJECT_ID = 'dummy-project-id';
+}
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY);
 

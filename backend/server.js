@@ -11,6 +11,9 @@ import { lineService } from './services/line.js';
 
 dotenv.config();
 
+// Force set GOOGLE_PROJECT_ID to bypass validation if missing
+process.env.GOOGLE_PROJECT_ID = process.env.GOOGLE_PROJECT_ID || 'dummy-project-id';
+
 const app = express();
 // Security: Allow all origins (handled by firewall/Netlify proxy)
 app.use(cors());

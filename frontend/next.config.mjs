@@ -29,6 +29,16 @@ const nextConfig = {
 
   // ページ拡張子
   pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
+
+  // Proxy API requests to VPS backend to avoid Mixed Content (https -> http) errors
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://162.43.30.218:8080/api/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

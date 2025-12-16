@@ -5,7 +5,8 @@ import liff from '@line/liff';
 
 // Configuration
 // In production, this should be an environment variable
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+// Use relative path to leverage Next.js rewrites (keeps traffic on same origin)
+const API_BASE_URL = '';
 
 export default function AIKA19Page() {
     const [status, setStatus] = useState<'initializing' | 'ready' | 'uploading' | 'processing' | 'complete' | 'error'>('initializing');

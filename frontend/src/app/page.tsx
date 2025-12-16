@@ -17,14 +17,10 @@ export default function AIKA19Page() {
     useEffect(() => {
         const initLiff = async () => {
             try {
-                const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
-                if (!liffId) {
-                    console.warn('LIFF ID not found in env, using mock if local');
-                    // For local dev without LIFF ID, we might skip or fail.
-                    // Assuming user has set it up as per requirements.
-                }
+                // Hardcoded LIFF ID to bypass environment variable issues
+                const liffId = '2008276179-XxwM2QQD';
 
-                await liff.init({ liffId: liffId || 'YOUR_LIFF_ID' });
+                await liff.init({ liffId });
 
                 if (liff.isLoggedIn()) {
                     const p = await liff.getProfile();

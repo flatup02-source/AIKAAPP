@@ -61,55 +61,59 @@ app.post('/api/upload-request', async (req, res) => {
   }
 });
 
-// 2. Trigger Analysis
 app.post('/api/analyze', async (req, res) => {
-  const { fileKey, userId } = req.body;
+  try {
+    const { fileKey, userId } = req.body;
 
-  if (!fileKey || !userId) {
-    return res.status(400).json({ error: 'Missing fileKey or userId' });
-  }
-
-  // Double check limit before committing resources
-  if (!circuitBreaker.checkLimit()) {
-    // Even if they uploaded, we can't analyze.
-    // Notify user immediately via response
-    return res.status(429).json({ message: '本日の受付は終了しました' });
-  }
-
-  // Record Usage immediately to reserve slot (or after success? Standard is leaky bucket, but for strict cost, reserve now).
-  circuitBreaker.recordUsage('GEMINI_ANALYSIS', 0); // Cost updated later if needed, or fixed 1 unit
-
-  // Return immediately to client so LIFF doesn't hang
-  res.status(202).json({ message: 'Analysis started', status: 'processing' });
-
-  // Async Processing
-  (async () => {
-    const tempFilePath = path.join('/tmp', path.basename(fileKey));
-    try {
-      console.log(`Starting analysis for ${fileKey}...`);
-
-      // 1. Download from R2
-      const s3Stream = await r2Service.getFileStream(fileKey);
-      await pipeline(s3Stream, fs.createWriteStream(tempFilePath));
-      console.log('Downloaded to', tempFilePath);
-
-      // 2. OpenAI/Gemini Analysis
-      const resultText = await geminiService.analyzeVideo(tempFilePath);
-      console.log('Analysis result:', resultText.slice(0, 50) + '...');
-
-      // 3. Push to LINE
-      await lineService.pushMessage(userId, "【解析完了】\n" + resultText);
-
-    } catch (error) {
-      console.error('Async Analysis Error:', error);
-      await lineService.pushMessage(userId, "【エラー】\n動画の解析中にエラーが発生しました。もう一度お試しください。");
-    } finally {
-      // Cleanup
-      if (fs.existsSync(tempFilePath)) {
-        fs.unlinkSync(tempFilePath);
-      }
+    if (!fileKey || !userId) {
+      return res.status(400).json({ error: 'Missing fileKey or userId' });
     }
-  })();
+
+    // Double check limit before committing resources
+    if (!circuitBreaker.checkLimit()) {
+      // Even if they uploaded, we can't analyze.
+      // Notify user immediately via response
+      return res.status(429).json({ message: '本日の受付は終了しました' });
+    }
+
+    // Record Usage immediately to reserve slot (or after success? Standard is leaky bucket, but for strict cost, reserve now).
+    circuitBreaker.recordUsage('GEMINI_ANALYSIS', 0); // Cost updated later if needed, or fixed 1 unit
+
+    // Return immediately to client so LIFF doesn't hang
+    res.status(202).json({ message: 'Analysis started', status: 'processing' });
+
+    // Async Processing
+    (async () => {
+      const tempFilePath = path.join('/tmp', path.basename(fileKey));
+      try {
+        console.log(`Starting analysis for ${fileKey}...`);
+
+        // 1. Download from R2
+        const s3Stream = await r2Service.getFileStream(fileKey);
+        await pipeline(s3Stream, fs.createWriteStream(tempFilePath));
+        console.log('Downloaded to', tempFilePath);
+
+        // 2. OpenAI/Gemini Analysis
+        const resultText = await geminiService.analyzeVideo(tempFilePath);
+        console.log('Analysis result:', resultText.slice(0, 50) + '...');
+
+        // 3. Push to LINE
+        await lineService.pushMessage(userId, "【解析完了】\n" + resultText);
+
+      } catch (error) {
+        console.error('Async Analysis Error:', error);
+        await lineService.pushMessage(userId, "【エラー】\n動画の解析中にエラーが発生しました。もう一度お試しください。");
+      } finally {
+        // Cleanup
+        if (fs.existsSync(tempFilePath)) {
+          fs.unlinkSync(tempFilePath);
+        }
+      }
+    })();
+  } catch (error) {
+    console.error('Analyze Request Error:', error);
+    res.status(500).json({ error: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined });
+  }
 });
 
 const port = process.env.PORT || 8080;

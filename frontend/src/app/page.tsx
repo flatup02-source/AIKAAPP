@@ -1,1870 +1,260 @@
 'use client';
 
-import Image from 'next/image'; // Assuming next/image is used for the Image component
-
-export default function Home() {
-  return (
-    <div className="min-h-screen bg-[var(--color-bg-base)] font-sans text-[var(--color-text-main)]">
-      {/* ===== ヘッダーナビゲーション（固定・半透明） ===== */}
-      <header
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 50,
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          backdropFilter: 'blur(10px)',
-          borderBottom: '2px solid var(--color-bg-base)',
-          height: '80px',
-          display: 'flex',
-          alignItems: 'center',
-          transition: 'all 0.3s ease',
-          boxShadow: 'var(--shadow-sm)'
-        }}
-      >
-        <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {/* ロゴ */}
-          <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
-            <span style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--color-primary)', fontFamily: '"Zen Maru Gothic", sans-serif' }}>FLATUP</span>
-            <span style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--color-text-main)', fontFamily: '"Zen Maru Gothic", sans-serif' }}>GYM</span>
-          </a>
-
-          {/* PCメニュー */}
-          <nav className="hidden md:flex" style={{ alignItems: 'center', gap: '2rem' }}>
-            <a href="#about" style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--color-text-main)', transition: 'color 0.2s' }} className="hover:text-[var(--color-primary)]">想い</a>
-            <a href="#pricing" style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--color-text-main)', transition: 'color 0.2s' }} className="hover:text-[var(--color-primary)]">料金</a>
-            <a href="#access" style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--color-text-main)', transition: 'color 0.2s' }} className="hover:text-[var(--color-primary)]">アクセス</a>
-            <a href="/aika19" style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--color-primary)', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '0.25rem', backgroundColor: 'var(--color-bg-base)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-full)' }} className="hover:scale-105">
-              <span style={{ fontSize: '1.2rem' }}>✨</span> AIKA19
-            </a>
-          </nav>
-
-          {/* ヘッダーCTA */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <a
-              href="https://lin.ee/1TPJ2JH"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden md:flex"
-              style={{
-                backgroundColor: '#06C755',
-                color: 'white',
-                padding: '0.75rem 1.5rem',
-                borderRadius: 'var(--radius-full)',
-                fontWeight: '700',
-                fontSize: '0.9rem',
-                alignItems: 'center',
-                gap: '0.5rem',
-                boxShadow: '0 4px 12px rgba(6, 199, 85, 0.3)',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              <span>LINEで予約</span>
-            </a>
-          </div>
-        </div>
-      </header>
-
-      <main>
-        {/* ===== ヒーローセクション（2025年版 Kawaii Style） ===== */}
-        <section
-          style={{
-            position: 'relative',
-            height: '100vh',
-            minHeight: '600px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-            paddingTop: '80px'
-          }}
-        >
-          {/* 背景画像 */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: -1
-            }}
-          >
-            <Image
-              src="/images/hero_new.png"
-              alt="楽しそうにキックボクシングをする女性たち"
-              fill
-              style={{ objectFit: 'cover', objectPosition: 'center 20%' }}
-              priority
-            />
-            {/* グラデーションオーバーレイ（ふんわり白ピンク） */}
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'linear-gradient(to right, rgba(255,245,247,0.85) 0%, rgba(255,255,255,0.5) 100%)'
-              }}
-            />
-          </div>
-
-          <div className="container" style={{ position: 'relative', zIndex: 10, maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem', textAlign: 'center' }}>
-            {/* キャッチコピー */}
-            <h1
-              style={{
-                fontSize: 'clamp(2rem, 6vw, 4rem)',
-                fontWeight: '900',
-                lineHeight: '1.3',
-                marginBottom: '1.5rem',
-                color: 'var(--color-text-main)',
-                letterSpacing: '0.05em',
-                fontFamily: '"Zen Maru Gothic", sans-serif',
-                textShadow: '2px 2px 0px #FFF'
-              }}
-            >
-              やさしく強く。<br />
-              はじめての格闘技は<br className="md:hidden" />FLATUPGYMへ。
-            </h1>
-
-            {/* サブコピー */}
-            <p
-              style={{
-                fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
-                lineHeight: '1.8',
-                marginBottom: '3rem',
-                fontWeight: '700',
-                color: 'var(--color-text-main)',
-                backgroundColor: 'rgba(255,255,255,0.8)',
-                display: 'inline-block',
-                padding: '0.75rem 2rem',
-                borderRadius: 'var(--radius-full)',
-                boxShadow: 'var(--shadow-sm)',
-                fontFamily: '"Zen Maru Gothic", sans-serif'
-              }}
-            >
-              成田市・初心者専門 ｜ キックボクシング / キッズ / ブラジリアン柔術
-            </p>
-
-            {/* CTAボタン */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
-              <a
-                href="https://lin.ee/1TPJ2JH"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="animate-bounce-slow"
-                style={{
-                  backgroundColor: 'var(--color-primary)',
-                  color: 'white',
-                  padding: '1.25rem 3rem',
-                  borderRadius: 'var(--radius-full)',
-                  fontWeight: '900',
-                  fontSize: 'clamp(1.1rem, 3vw, 1.4rem)',
-                  boxShadow: '0 8px 20px rgba(255, 158, 172, 0.6)',
-                  transition: 'all 0.3s ease',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  border: '4px solid white',
-                  fontFamily: '"Zen Maru Gothic", sans-serif'
-                }}
-              >
-                <span>＼ 体験レッスン０円！／</span>
-              </a>
-
-              <a
-                href="https://lin.ee/1TPJ2JH"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  backgroundColor: '#06C755',
-                  color: 'white',
-                  padding: '1rem 2.5rem',
-                  borderRadius: 'var(--radius-full)',
-                  fontWeight: '700',
-                  fontSize: '1rem',
-                  boxShadow: '0 4px 12px rgba(6, 199, 85, 0.3)',
-                  transition: 'all 0.3s ease',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontFamily: '"Zen Maru Gothic", sans-serif'
-                }}
-              >
-                <span style={{ fontSize: '1.4rem' }}>💬</span>
-                LINEで予約する
-              </a>
-            </div>
-          </div>
-
-          {/* スクロールインジケーター */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '2rem',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              animation: 'bounce 2s infinite',
-              opacity: 0.6
-            }}
-          >
-            <span style={{ fontSize: '2rem', color: 'var(--color-primary)' }}>↓</span>
-          </div>
-        </section>
-
-        {/* ===== 基本情報バー ===== */}
-        <div
-          style={{
-            backgroundColor: 'var(--color-navy)',
-            color: 'white',
-            padding: '1.25rem 0',
-            fontSize: 'clamp(0.75rem, 2vw, 0.9375rem)',
-            fontWeight: '500'
-          }}
-        >
-          <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' }}>
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: 'clamp(1rem, 3vw, 2rem)',
-                textAlign: 'center'
-              }}
-            >
-              <span>📍 成田市土屋516-4 2F</span>
-              <span className="desktop-text">🚗 大型駐車場無料</span>
-              <span>📞 070-9035-3485</span>
-              <span className="desktop-text">⏰ 月〜土営業</span>
-            </div>
-          </div>
-        </div>
-
-        {/* ===== お悩みセクション ===== */}
-        <section className="section" style={{ backgroundColor: '#F9F9F9', padding: 'var(--spacing-section) 0' }}>
-          <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' }}>
-            <h2 className="section-title" style={{ textAlign: 'center', marginBottom: 'var(--spacing-element)', color: 'var(--color-navy)', fontSize: 'var(--font-size-h2)', fontWeight: '900' }}>
-              こんなお悩みありませんか？
-            </h2>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: '2rem'
-              }}
-            >
-              {/* カード1 */}
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  padding: '2rem',
-                  borderRadius: '1rem',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                  textAlign: 'center',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.12)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
-                }}
-              >
-                <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>😓</div>
-                <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '1rem', color: 'var(--color-navy)' }}>
-                  ダイエットが続かない
-                </h3>
-                <p style={{ color: 'var(--color-gray-600)', lineHeight: '1.8', fontSize: '1rem' }}>
-                  「何度もダイエットに挑戦するけど、いつも三日坊主で終わってしまう…」
-                </p>
-              </div>
-
-              {/* カード2 */}
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  padding: '2rem',
-                  borderRadius: '1rem',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                  textAlign: 'center',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.12)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
-                }}
-              >
-                <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>😤</div>
-                <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '1rem', color: 'var(--color-navy)' }}>
-                  ストレスが溜まっている
-                </h3>
-                <p style={{ color: 'var(--color-gray-600)', lineHeight: '1.8', fontSize: '1rem' }}>
-                  「仕事や家事のストレスを発散する場所がない。モヤモヤが溜まる一方…」
-                </p>
-              </div>
-
-              {/* カード3 */}
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  padding: '2rem',
-                  borderRadius: '1rem',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                  textAlign: 'center',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.12)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
-                }}
-              >
-                <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>😰</div>
-                <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '1rem', color: 'var(--color-navy)' }}>
-                  一人でジムに行くのは不安
-                </h3>
-                <p style={{ color: 'var(--color-gray-600)', lineHeight: '1.8', fontSize: '1rem' }}>
-                  「ジムに一人で行くのは勇気がいる。周りの目が気になってしまう…」
-                </p>
-              </div>
-
-              {/* カード4 */}
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  padding: '2rem',
-                  borderRadius: '1rem',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                  textAlign: 'center',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.12)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
-                }}
-              >
-                <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>😨</div>
-                <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '1rem', color: 'var(--color-navy)' }}>
-                  格闘技ジムは男性ばかりで怖い
-                </h3>
-                <p style={{ color: 'var(--color-gray-600)', lineHeight: '1.8', fontSize: '1rem' }}>
-                  「格闘技ジムって男性ばかりで厳しそう…女性でも大丈夫？」
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ===== 選ばれる理由セクション ===== */}
-        <section className="section" style={{ backgroundColor: 'white', padding: 'var(--spacing-section) 0' }}>
-          <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' }}>
-            <h2 className="section-title" style={{ textAlign: 'center', marginBottom: 'var(--spacing-element)', color: 'var(--color-navy)', fontSize: 'var(--font-size-h2)', fontWeight: '900' }}>
-              FLAT-UP GYMが選ばれる3つの理由
-            </h2>
-
-            {/* 理由1: 左:写真 / 右:テキスト */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: 'clamp(2rem, 5vw, 4rem)',
-                alignItems: 'center',
-                marginBottom: 'clamp(5rem, 8vw, 6.25rem)'
-              }}
-            >
-              <div style={{ order: 1 }}>
-                <img
-                  src="/images/instructor.png"
-                  alt="女性オーナーAIKA"
-                  style={{
-                    width: '100%',
-                    height: 'auto',
-                    borderRadius: 'var(--radius-lg)',
-                    boxShadow: 'var(--shadow-lg)'
-                  }}
-                />
-              </div>
-              <div style={{ order: 2 }}>
-                <h3 style={{ fontSize: 'var(--font-size-h3)', fontWeight: '700', marginBottom: '1.5rem', color: 'var(--color-coral-pink)' }}>
-                  女性オーナーの安心感
-                </h3>
-                <p style={{ color: 'var(--color-gray-600)', lineHeight: '1.9', fontSize: 'var(--font-size-body)' }}>
-                  女性オーナーAIKAが直接指導。女性ならではの視点で、きめ細やかなサポートと快適な環境を提供します。
-                </p>
-              </div>
-            </div>
-
-            {/* 理由2: 右:写真 / 左:テキスト */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: 'clamp(2rem, 5vw, 4rem)',
-                alignItems: 'center',
-                marginBottom: 'clamp(5rem, 8vw, 6.25rem)'
-              }}
-            >
-              <div style={{ order: 2 }} className="desktop-order-1">
-                <img
-                  src="/images/feature_beginners.png"
-                  alt="初心者に優しい"
-                  style={{
-                    width: '100%',
-                    height: 'auto',
-                    borderRadius: 'var(--radius-lg)',
-                    boxShadow: 'var(--shadow-lg)'
-                  }}
-                />
-              </div>
-              <div style={{ order: 1 }} className="desktop-order-2">
-                <h3 style={{ fontSize: 'var(--font-size-h3)', fontWeight: '700', marginBottom: '1.5rem', color: 'var(--color-coral-pink)' }}>
-                  初心者・女性に特化
-                </h3>
-                <p style={{ color: 'var(--color-gray-600)', lineHeight: '1.9', fontSize: 'var(--font-size-body)' }}>
-                  会員の8割が運動経験ゼロからスタート。あなたのペースで楽しく学べます。
-                </p>
-              </div>
-            </div>
-
-            {/* 理由3: 左:写真 / 右:テキスト */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: 'clamp(2rem, 5vw, 4rem)',
-                alignItems: 'center'
-              }}
-            >
-              <div style={{ order: 1 }}>
-                <img
-                  src="/images/feature_clean.png"
-                  alt="アットホームな雰囲気"
-                  style={{
-                    width: '100%',
-                    height: 'auto',
-                    borderRadius: 'var(--radius-lg)',
-                    boxShadow: 'var(--shadow-lg)'
-                  }}
-                />
-              </div>
-              <div style={{ order: 2 }}>
-                <h3 style={{ fontSize: 'var(--font-size-h3)', fontWeight: '700', marginBottom: '1.5rem', color: 'var(--color-coral-pink)' }}>
-                  アットホームな雰囲気
-                </h3>
-                <p style={{ color: 'var(--color-gray-600)', lineHeight: '1.9', fontSize: 'var(--font-size-body)' }}>
-                  仲間と一緒に励まし合いながら目標達成。無理な勧誘は一切ありません。
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ===== クラス選択セクション ===== */}
-        <section className="section" style={{ backgroundColor: '#F9F9F9', padding: 'var(--spacing-section) 0' }}>
-          <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' }}>
-            <h2 className="section-title" style={{ textAlign: 'center', marginBottom: 'var(--spacing-element)', color: 'var(--color-navy)', fontSize: 'var(--font-size-h2)', fontWeight: '900' }}>
-              あなたにぴったりのクラスは？
-            </h2>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: '2rem'
-              }}
-            >
-              {/* カード1: レディース */}
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  padding: '2rem',
-                  borderRadius: '1rem',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.03) translateY(-4px)';
-                  e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.16)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
-                }}
-              >
-                <div style={{ fontSize: '4rem', marginBottom: '1rem', textAlign: 'center' }}>👩</div>
-                <h3 style={{ fontSize: '1.75rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--color-navy)', textAlign: 'center' }}>
-                  レディースクラス
-                </h3>
-                <p style={{ color: 'var(--color-gray-600)', marginBottom: '1rem', textAlign: 'center', fontSize: '0.9375rem' }}>
-                  ダイエット・美容・ストレス解消
-                </p>
-                <p style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--color-coral-pink)', textAlign: 'center', marginBottom: '1.5rem' }}>
-                  月額¥8,800
-                </p>
-                <a
-                  href="https://lin.ee/1TPJ2JH"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'block',
-                    backgroundColor: 'var(--color-coral-pink)',
-                    color: 'white',
-                    padding: '0.875rem 1.5rem',
-                    borderRadius: 'var(--radius-full)',
-                    fontWeight: '700',
-                    textAlign: 'center',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-coral-pink-dark)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-coral-pink)';
-                  }}
-                >
-                  詳しく見る →
-                </a>
-              </div>
-
-              {/* カード2: 産後ママ */}
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  padding: '2rem',
-                  borderRadius: '1rem',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.03) translateY(-4px)';
-                  e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.16)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
-                }}
-              >
-                <div style={{ fontSize: '4rem', marginBottom: '1rem', textAlign: 'center' }}>👶</div>
-                <h3 style={{ fontSize: '1.75rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--color-navy)', textAlign: 'center' }}>
-                  産後ママクラス
-                </h3>
-                <p style={{ color: 'var(--color-gray-600)', marginBottom: '1rem', textAlign: 'center', fontSize: '0.9375rem' }}>
-                  子連れOK・30分レッスン
-                </p>
-                <p style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--color-coral-pink)', textAlign: 'center', marginBottom: '1.5rem' }}>
-                  月額¥8,800
-                </p>
-                <a
-                  href="https://lin.ee/1TPJ2JH"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'block',
-                    backgroundColor: 'var(--color-coral-pink)',
-                    color: 'white',
-                    padding: '0.875rem 1.5rem',
-                    borderRadius: 'var(--radius-full)',
-                    fontWeight: '700',
-                    textAlign: 'center',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-coral-pink-dark)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-coral-pink)';
-                  }}
-                >
-                  詳しく見る →
-                </a>
-              </div>
-
-              {/* カード3: キッズ */}
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  padding: '2rem',
-                  borderRadius: '1rem',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.03) translateY(-4px)';
-                  e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.16)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
-                }}
-              >
-                <div style={{ fontSize: '4rem', marginBottom: '1rem', textAlign: 'center' }}>🧒</div>
-                <h3 style={{ fontSize: '1.75rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--color-navy)', textAlign: 'center' }}>
-                  キッズクラス
-                </h3>
-                <p style={{ color: 'var(--color-gray-600)', marginBottom: '1rem', textAlign: 'center', fontSize: '0.9375rem' }}>
-                  礼儀・体力向上・護身術
-                </p>
-                <p style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--color-coral-pink)', textAlign: 'center', marginBottom: '1.5rem' }}>
-                  月額¥7,700
-                </p>
-                <a
-                  href="https://lin.ee/1TPJ2JH"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'block',
-                    backgroundColor: 'var(--color-coral-pink)',
-                    color: 'white',
-                    padding: '0.875rem 1.5rem',
-                    borderRadius: 'var(--radius-full)',
-                    fontWeight: '700',
-                    textAlign: 'center',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-coral-pink-dark)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-coral-pink)';
-                  }}
-                >
-                  詳しく見る →
-                </a>
-              </div>
-
-              {/* カード4: シニア */}
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  padding: '2rem',
-                  borderRadius: '1rem',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.03) translateY(-4px)';
-                  e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.16)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
-                }}
-              >
-                <div style={{ fontSize: '4rem', marginBottom: '1rem', textAlign: 'center' }}>👴</div>
-                <h3 style={{ fontSize: '1.75rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--color-navy)', textAlign: 'center' }}>
-                  シニアクラス
-                </h3>
-                <p style={{ color: 'var(--color-gray-600)', marginBottom: '1rem', textAlign: 'center', fontSize: '0.9375rem' }}>
-                  健康維持・認知症予防
-                </p>
-                <p style={{ fontSize: '2rem', fontWeight: '900', color: 'var(--color-coral-pink)', textAlign: 'center', marginBottom: '1.5rem' }}>
-                  月額¥8,800
-                </p>
-                <a
-                  href="https://lin.ee/1TPJ2JH"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'block',
-                    backgroundColor: 'var(--color-coral-pink)',
-                    color: 'white',
-                    padding: '0.875rem 1.5rem',
-                    borderRadius: 'var(--radius-full)',
-                    fontWeight: '700',
-                    textAlign: 'center',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-coral-pink-dark)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-coral-pink)';
-                  }}
-                >
-                  詳しく見る →
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ===== 料金プランセクション ===== */}
-        <section id="pricing" className="section" style={{ backgroundColor: 'white', padding: 'var(--spacing-section) 0' }}>
-          <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' }}>
-            <h2 className="section-title" style={{ textAlign: 'center', marginBottom: '1rem', color: 'var(--color-navy)', fontSize: 'var(--font-size-h2)', fontWeight: '900' }}>
-              シンプルで分かりやすい料金プラン
-            </h2>
-            <p className="section-subtitle" style={{ textAlign: 'center', color: 'var(--color-gray-600)', fontSize: 'var(--font-size-body)', marginBottom: 'var(--spacing-element)' }}>
-              入会金・年会費なし！月額制で安心
-            </p>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: '2rem',
-                marginBottom: '3rem'
-              }}
-            >
-              {/* カード1: キッズプラン */}
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  padding: '2.5rem 2rem',
-                  borderRadius: '1rem',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                  border: '2px solid var(--color-gray-200)',
-                  transition: 'all 0.3s ease',
-                  textAlign: 'center'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.16)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
-                }}
-              >
-                <h3 style={{ fontSize: '1.75rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--color-navy)' }}>
-                  キッズプラン
-                </h3>
-                <p style={{ color: 'var(--color-gray-600)', marginBottom: '1.5rem', fontSize: '0.9375rem' }}>
-                  小学1〜6年生
-                </p>
-                <p style={{ fontSize: 'clamp(2.25rem, 5vw, 2.625rem)', fontWeight: '900', color: 'var(--color-navy)', marginBottom: '0.5rem' }}>
-                  ¥7,700
-                  <span style={{ fontSize: '1.125rem', fontWeight: '500', color: 'var(--color-gray-600)' }}>/月</span>
-                </p>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)', marginBottom: '2rem' }}>（税込）</p>
-
-                <ul style={{ listStyle: 'none', textAlign: 'left', marginBottom: '2rem', color: 'var(--color-gray-600)', lineHeight: '2' }}>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: 'var(--color-lime-green)', fontSize: '1.25rem' }}>✓</span>
-                    週3回通い放題
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: 'var(--color-lime-green)', fontSize: '1.25rem' }}>✓</span>
-                    護身術・体力向上
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: 'var(--color-lime-green)', fontSize: '1.25rem' }}>✓</span>
-                    礼儀マナー指導
-                  </li>
-                </ul>
-
-                <a
-                  href="https://lin.ee/1TPJ2JH"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'block',
-                    backgroundColor: 'var(--color-navy)',
-                    color: 'white',
-                    padding: '1rem 2rem',
-                    borderRadius: 'var(--radius-full)',
-                    fontWeight: '700',
-                    textAlign: 'center',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-navy-light)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-navy)';
-                  }}
-                >
-                  体験予約
-                </a>
-              </div>
-
-              {/* カード2: レディースプラン（人気No.1） */}
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  padding: '2.5rem 2rem',
-                  borderRadius: '1rem',
-                  boxShadow: '0 12px 32px rgba(255, 215, 0, 0.3)',
-                  border: '3px solid #FFD700',
-                  transition: 'all 0.3s ease',
-                  textAlign: 'center',
-                  position: 'relative',
-                  transform: 'scale(1.05)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.08) translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 16px 40px rgba(255, 215, 0, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.05) translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 12px 32px rgba(255, 215, 0, 0.3)';
-                }}
-              >
-                {/* 人気No.1バッジ */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '-12px',
-                    right: '1rem',
-                    backgroundColor: '#FFD700',
-                    color: '#1E3A5F',
-                    padding: '0.5rem 1.5rem',
-                    borderRadius: 'var(--radius-full)',
-                    fontWeight: '900',
-                    fontSize: '0.875rem',
-                    boxShadow: '0 4px 12px rgba(255, 215, 0, 0.5)'
-                  }}
-                >
-                  ★ 人気No.1 ★
-                </div>
-
-                <h3 style={{ fontSize: '1.75rem', fontWeight: '700', marginBottom: '0.5rem', color: '#FFD700', marginTop: '1rem' }}>
-                  レディースプラン
-                </h3>
-                <p style={{ color: 'var(--color-gray-600)', marginBottom: '1.5rem', fontSize: '0.9375rem' }}>
-                  女性専用
-                </p>
-                <p style={{ fontSize: '3rem', fontWeight: '900', color: '#FFD700', marginBottom: '0.5rem', lineHeight: '1' }}>
-                  ¥8,800
-                  <span style={{ fontSize: '1.125rem', fontWeight: '500', color: 'var(--color-gray-600)' }}>/月</span>
-                </p>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)', marginBottom: '2rem' }}>（税込）</p>
-
-                <ul style={{ listStyle: 'none', textAlign: 'left', marginBottom: '2rem', color: 'var(--color-gray-600)', lineHeight: '2' }}>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: 'var(--color-lime-green)', fontSize: '1.25rem' }}>✓</span>
-                    週3回レッスン
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: 'var(--color-lime-green)', fontSize: '1.25rem' }}>✓</span>
-                    ダイエット・美容
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: 'var(--color-lime-green)', fontSize: '1.25rem' }}>✓</span>
-                    子連れ参加OK
-                  </li>
-                </ul>
-
-                <a
-                  href="https://lin.ee/1TPJ2JH"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'block',
-                    backgroundColor: '#FFD700',
-                    color: '#1E3A5F',
-                    padding: '1rem 2rem',
-                    borderRadius: 'var(--radius-full)',
-                    fontWeight: '700',
-                    textAlign: 'center',
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 4px 12px rgba(255, 215, 0, 0.3)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#FFC700';
-                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(255, 215, 0, 0.4)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#FFD700';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 215, 0, 0.3)';
-                  }}
-                >
-                  体験予約
-                </a>
-              </div>
-
-              {/* カード3: メンズプラン */}
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  padding: '2.5rem 2rem',
-                  borderRadius: '1rem',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                  border: '2px solid var(--color-gray-200)',
-                  transition: 'all 0.3s ease',
-                  textAlign: 'center'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-8px)';
-                  e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.16)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
-                }}
-              >
-                <h3 style={{ fontSize: '1.75rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--color-navy)' }}>
-                  メンズプラン
-                </h3>
-                <p style={{ color: 'var(--color-gray-600)', marginBottom: '1.5rem', fontSize: '0.9375rem' }}>
-                  高校生以上男性
-                </p>
-                <p style={{ fontSize: 'clamp(2.25rem, 5vw, 2.625rem)', fontWeight: '900', color: 'var(--color-navy)', marginBottom: '0.5rem' }}>
-                  ¥9,900
-                  <span style={{ fontSize: '1.125rem', fontWeight: '500', color: 'var(--color-gray-600)' }}>/月</span>
-                </p>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)', marginBottom: '2rem' }}>（税込）</p>
-
-                <ul style={{ listStyle: 'none', textAlign: 'left', marginBottom: '2rem', color: 'var(--color-gray-600)', lineHeight: '2' }}>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: 'var(--color-lime-green)', fontSize: '1.25rem' }}>✓</span>
-                    週3回通い放題
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: 'var(--color-lime-green)', fontSize: '1.25rem' }}>✓</span>
-                    キック・MMA・BJJ
-                  </li>
-                  <li style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: 'var(--color-lime-green)', fontSize: '1.25rem' }}>✓</span>
-                    選手育成も可能
-                  </li>
-                </ul>
-
-                <a
-                  href="https://lin.ee/1TPJ2JH"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'block',
-                    backgroundColor: 'var(--color-navy)',
-                    color: 'white',
-                    padding: '1rem 2rem',
-                    borderRadius: 'var(--radius-full)',
-                    fontWeight: '700',
-                    textAlign: 'center',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-navy-light)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-navy)';
-                  }}
-                >
-                  体験予約
-                </a>
-              </div>
-            </div>
-
-            {/* 回数券オプション */}
-            <div
-              style={{
-                backgroundColor: 'var(--color-light-gray)',
-                padding: '2rem',
-                borderRadius: 'var(--radius-lg)',
-                textAlign: 'center'
-              }}
-            >
-              <h4 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.5rem', color: 'var(--color-navy)' }}>
-                回数券オプション
-              </h4>
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  justifyContent: 'center',
-                  gap: '2rem',
-                  fontSize: '0.9375rem',
-                  color: 'var(--color-gray-600)'
-                }}
-              >
-                <div>
-                  <span style={{ fontWeight: '700', color: 'var(--color-navy)' }}>ビジター</span>
-                  <br />
-                  ¥3,000/回
-                </div>
-                <div>
-                  <span style={{ fontWeight: '700', color: 'var(--color-navy)' }}>回数券6回</span>
-                  <br />
-                  ¥15,000（半年有効）
-                </div>
-                <div>
-                  <span style={{ fontWeight: '700', color: 'var(--color-navy)' }}>回数券12回</span>
-                  <br />
-                  ¥30,000（1年有効）
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ===== お客様の声セクション ===== */}
-        <section className="section" style={{ backgroundColor: '#F9F9F9', padding: 'var(--spacing-section) 0' }}>
-          <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' }}>
-            <h2 className="section-title" style={{ textAlign: 'center', marginBottom: 'var(--spacing-element)', color: 'var(--color-navy)', fontSize: 'var(--font-size-h2)', fontWeight: '900' }}>
-              お客様の声
-            </h2>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                gap: '2rem'
-              }}
-            >
-              {/* カード1 */}
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  padding: '2.5rem',
-                  borderRadius: 'var(--radius-lg)',
-                  boxShadow: 'var(--shadow-lg)',
-                  position: 'relative'
-                }}
-              >
-                {/* 引用符アイコン */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '1.5rem',
-                    right: '1.5rem',
-                    fontSize: '3rem',
-                    color: 'var(--color-coral-pink)',
-                    opacity: '0.2',
-                    fontFamily: 'Georgia, serif'
-                  }}
-                >
-                  "
-                </div>
-
-                {/* アバターと名前 */}
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
-                  <div
-                    style={{
-                      width: '60px',
-                      height: '60px',
-                      backgroundColor: 'var(--color-coral-pink-light)',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '2rem',
-                      marginRight: '1rem'
-                    }}
-                  >
-                    👩
-                  </div>
-                  <div>
-                    <h4 style={{ fontWeight: '700', color: 'var(--color-navy)', marginBottom: '0.25rem' }}>A.Mさん</h4>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>30代女性</p>
-                  </div>
-                </div>
-
-                {/* タイトル */}
-                <h5 style={{ fontSize: '1.125rem', fontWeight: '700', color: 'var(--color-coral-pink)', marginBottom: '1rem' }}>
-                  「運動が苦手な私でも続けられました！」
-                </h5>
-
-                {/* 本文 */}
-                <p style={{ color: 'var(--color-gray-600)', lineHeight: '1.9', marginBottom: '1.5rem', fontSize: '0.9375rem' }}>
-                  運動経験が全くなく不安でしたが、トレーナーさんが優しく丁寧に教えてくれるので楽しく続けられています。体重が減っただけでなく、気持ちも前向きに！
-                </p>
-
-                {/* 星評価 */}
-                <div style={{ fontSize: '1.25rem', color: '#FFD700' }}>
-                  ★★★★★
-                </div>
-              </div>
-
-              {/* カード2 */}
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  padding: '2.5rem',
-                  borderRadius: 'var(--radius-lg)',
-                  boxShadow: 'var(--shadow-lg)',
-                  position: 'relative'
-                }}
-              >
-                {/* 引用符アイコン */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '1.5rem',
-                    right: '1.5rem',
-                    fontSize: '3rem',
-                    color: 'var(--color-coral-pink)',
-                    opacity: '0.2',
-                    fontFamily: 'Georgia, serif'
-                  }}
-                >
-                  "
-                </div>
-
-                {/* アバターと名前 */}
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
-                  <div
-                    style={{
-                      width: '60px',
-                      height: '60px',
-                      backgroundColor: 'var(--color-coral-pink-light)',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '2rem',
-                      marginRight: '1rem'
-                    }}
-                  >
-                    👩
-                  </div>
-                  <div>
-                    <h4 style={{ fontWeight: '700', color: 'var(--color-navy)', marginBottom: '0.25rem' }}>K.Tさん</h4>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>20代女性</p>
-                  </div>
-                </div>
-
-                {/* タイトル */}
-                <h5 style={{ fontSize: '1.125rem', fontWeight: '700', color: 'var(--color-coral-pink)', marginBottom: '1rem' }}>
-                  「仕事のストレスが吹き飛びます！」
-                </h5>
-
-                {/* 本文 */}
-                <p style={{ color: 'var(--color-gray-600)', lineHeight: '1.9', marginBottom: '1.5rem', fontSize: '0.9375rem' }}>
-                  仕事のストレスが溜まっていましたが、ミット打ちは最高のストレス発散になります。週2回通うのが楽しみです！
-                </p>
-
-                {/* 星評価 */}
-                <div style={{ fontSize: '1.25rem', color: '#FFD700' }}>
-                  ★★★★★
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ===== 無料体験セクション ===== */}
-        <section className="section" style={{ backgroundColor: 'white', padding: 'var(--spacing-section) 0' }}>
-          <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' }}>
-            <h2 className="section-title" style={{ textAlign: 'center', marginBottom: '1rem', color: 'var(--color-navy)', fontSize: 'var(--font-size-h2)', fontWeight: '900' }}>
-              まずは無料体験！30分で気軽に試せます
-            </h2>
-            <p className="section-subtitle" style={{ textAlign: 'center', color: 'var(--color-gray-600)', fontSize: 'var(--font-size-body)', marginBottom: 'var(--spacing-element)' }}>
-              簡単4ステップで、あなたも今日から始められます
-            </p>
-
-            {/* 4ステップタイムライン */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '2rem',
-                marginBottom: '4rem',
-                position: 'relative'
-              }}
-            >
-              {/* ステップ1 */}
-              <div style={{ textAlign: 'center', position: 'relative' }}>
-                <div
-                  style={{
-                    width: '80px',
-                    height: '80px',
-                    backgroundColor: 'var(--color-coral-pink)',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 1.5rem',
-                    boxShadow: '0 8px 20px rgba(255, 107, 122, 0.3)',
-                    position: 'relative',
-                    zIndex: 2
-                  }}
-                >
-                  <span style={{ fontSize: '3rem' }}>📱</span>
-                </div>
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    width: '32px',
-                    height: '32px',
-                    backgroundColor: 'var(--color-navy)',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: '900',
-                    fontSize: '1.125rem',
-                    zIndex: 3
-                  }}
-                >
-                  1
-                </div>
-                <h4 style={{ fontSize: '1.125rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--color-navy)' }}>
-                  LINEまたは電話で予約
-                </h4>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>
-                  30秒で簡単予約
-                </p>
-              </div>
-
-              {/* ステップ2 */}
-              <div style={{ textAlign: 'center', position: 'relative' }}>
-                <div
-                  style={{
-                    width: '80px',
-                    height: '80px',
-                    backgroundColor: 'var(--color-coral-pink)',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 1.5rem',
-                    boxShadow: '0 8px 20px rgba(255, 107, 122, 0.3)',
-                    position: 'relative',
-                    zIndex: 2
-                  }}
-                >
-                  <span style={{ fontSize: '3rem' }}>👕</span>
-                </div>
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    width: '32px',
-                    height: '32px',
-                    backgroundColor: 'var(--color-navy)',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: '900',
-                    fontSize: '1.125rem',
-                    zIndex: 3
-                  }}
-                >
-                  2
-                </div>
-                <h4 style={{ fontSize: '1.125rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--color-navy)' }}>
-                  当日は手ぶらでOK
-                </h4>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>
-                  グローブ無料レンタル
-                </p>
-              </div>
-
-              {/* ステップ3 */}
-              <div style={{ textAlign: 'center', position: 'relative' }}>
-                <div
-                  style={{
-                    width: '80px',
-                    height: '80px',
-                    backgroundColor: 'var(--color-coral-pink)',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 1.5rem',
-                    boxShadow: '0 8px 20px rgba(255, 107, 122, 0.3)',
-                    position: 'relative',
-                    zIndex: 2
-                  }}
-                >
-                  <span style={{ fontSize: '3rem' }}>🥊</span>
-                </div>
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    width: '32px',
-                    height: '32px',
-                    backgroundColor: 'var(--color-navy)',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: '900',
-                    fontSize: '1.125rem',
-                    zIndex: 3
-                  }}
-                >
-                  3
-                </div>
-                <h4 style={{ fontSize: '1.125rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--color-navy)' }}>
-                  30分の優しいレッスン
-                </h4>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>
-                  あなたのペースで
-                </p>
-              </div>
-
-              {/* ステップ4 */}
-              <div style={{ textAlign: 'center', position: 'relative' }}>
-                <div
-                  style={{
-                    width: '80px',
-                    height: '80px',
-                    backgroundColor: 'var(--color-coral-pink)',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 1.5rem',
-                    boxShadow: '0 8px 20px rgba(255, 107, 122, 0.3)',
-                    position: 'relative',
-                    zIndex: 2
-                  }}
-                >
-                  <span style={{ fontSize: '3rem' }}>💬</span>
-                </div>
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    width: '32px',
-                    height: '32px',
-                    backgroundColor: 'var(--color-navy)',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: '900',
-                    fontSize: '1.125rem',
-                    zIndex: 3
-                  }}
-                >
-                  4
-                </div>
-                <h4 style={{ fontSize: '1.125rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--color-navy)' }}>
-                  料金・システム説明
-                </h4>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>
-                  無理な勧誘なし
-                </p>
-              </div>
-            </div>
-
-            {/* FAQ */}
-            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-              <h3 style={{ fontSize: '1.75rem', fontWeight: '700', marginBottom: '2rem', color: 'var(--color-navy)', textAlign: 'center' }}>
-                よくある質問
-              </h3>
-
-              {/* FAQ項目1 */}
-              <details
-                style={{
-                  backgroundColor: 'white',
-                  border: '2px solid var(--color-gray-200)',
-                  borderRadius: 'var(--radius-lg)',
-                  marginBottom: '1rem',
-                  padding: '1.5rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                <summary
-                  style={{
-                    fontWeight: '700',
-                    fontSize: '1.125rem',
-                    color: 'var(--color-navy)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    listStyle: 'none'
-                  }}
-                >
-                  <span>Q. 運動経験ゼロでも大丈夫？</span>
-                  <span style={{ fontSize: '1.5rem', color: 'var(--color-coral-pink)' }}>+</span>
-                </summary>
-                <p style={{ marginTop: '1rem', color: 'var(--color-gray-600)', lineHeight: '1.8', paddingLeft: '1rem', borderLeft: '3px solid var(--color-coral-pink)' }}>
-                  A. 会員の8割が初心者スタート！運動が苦手な方でも、女性オーナーが優しく丁寧に指導します。あなたのペースで無理なく始められます。
-                </p>
-              </details>
-
-              {/* FAQ項目2 */}
-              <details
-                style={{
-                  backgroundColor: 'white',
-                  border: '2px solid var(--color-gray-200)',
-                  borderRadius: 'var(--radius-lg)',
-                  marginBottom: '1rem',
-                  padding: '1.5rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                <summary
-                  style={{
-                    fontWeight: '700',
-                    fontSize: '1.125rem',
-                    color: 'var(--color-navy)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    listStyle: 'none'
-                  }}
-                >
-                  <span>Q. 持ち物は？</span>
-                  <span style={{ fontSize: '1.5rem', color: 'var(--color-coral-pink)' }}>+</span>
-                </summary>
-                <p style={{ marginTop: '1rem', color: 'var(--color-gray-600)', lineHeight: '1.8', paddingLeft: '1rem', borderLeft: '3px solid var(--color-coral-pink)' }}>
-                  A. 動きやすい服・タオル・飲み物だけでOK！グローブやミットは無料でレンタルできます。更衣室も完備しているので、お仕事帰りでも安心です。
-                </p>
-              </details>
-
-              {/* FAQ項目3 */}
-              <details
-                style={{
-                  backgroundColor: 'white',
-                  border: '2px solid var(--color-gray-200)',
-                  borderRadius: 'var(--radius-lg)',
-                  marginBottom: '1rem',
-                  padding: '1.5rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                <summary
-                  style={{
-                    fontWeight: '700',
-                    fontSize: '1.125rem',
-                    color: 'var(--color-navy)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    listStyle: 'none'
-                  }}
-                >
-                  <span>Q. 体験後すぐ入会しないとダメ？</span>
-                  <span style={{ fontSize: '1.5rem', color: 'var(--color-coral-pink)' }}>+</span>
-                </summary>
-                <p style={{ marginTop: '1rem', color: 'var(--color-gray-600)', lineHeight: '1.8', paddingLeft: '1rem', borderLeft: '3px solid var(--color-coral-pink)' }}>
-                  A. 帰宅後にゆっくり考えてOKです！無理な勧誘は一切ありません。ご自身のペースで検討していただけます。気になることがあれば、いつでもLINEでお気軽にご相談ください。
-                </p>
-              </details>
-            </div>
-
-            {/* 体験予約CTA */}
-            <div style={{ textAlign: 'center', marginTop: '3rem' }}>
-              <a
-                href="https://lin.ee/1TPJ2JH"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  backgroundColor: 'var(--color-lime-green)',
-                  color: 'white',
-                  padding: '1.25rem 3rem',
-                  borderRadius: 'var(--radius-full)',
-                  fontWeight: '900',
-                  fontSize: 'clamp(1.125rem, 2.5vw, 1.375rem)',
-                  boxShadow: '0 10px 30px rgba(0, 200, 83, 0.4)',
-                  transition: 'all 0.3s ease',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '1rem',
-                  border: 'none',
-                  cursor: 'pointer',
-                  minHeight: '56px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-4px) scale(1.05)';
-                  e.currentTarget.style.boxShadow = '0 15px 40px rgba(0, 200, 83, 0.5)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  e.currentTarget.style.boxShadow = '0 10px 30px rgba(0, 200, 83, 0.4)';
-                }}
-              >
-                <span style={{ fontSize: '2rem' }}>💬</span>
-                LINEで無料体験を予約する
-              </a>
-            </div>
-          </div>
-        </section>
-
-        {/* ===== アクセスセクション ===== */}
-        <section id="access" className="section" style={{ backgroundColor: 'white', padding: 'var(--spacing-section) 0' }}>
-          <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' }}>
-            <h2 className="section-title" style={{ textAlign: 'center', marginBottom: 'var(--spacing-element)', color: 'var(--color-navy)', fontSize: 'var(--font-size-h2)', fontWeight: '900' }}>
-              アクセス
-            </h2>
-            <p className="section-subtitle" style={{ textAlign: 'center', color: 'var(--color-gray-600)', fontSize: 'var(--font-size-body)', marginBottom: 'var(--spacing-element)' }}>
-              車で来やすい！大型駐車場無料
-            </p>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: '3rem',
-                alignItems: 'start'
-              }}
-            >
-              {/* 左側: Googleマップ */}
-              <div style={{ width: '100%', height: '450px', borderRadius: 'var(--radius-lg)', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
-                <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3236.8!2d140.3!3d35.7!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzXCsDQyJzAwLjAiTiAxNDDCsDE4JzAwLjAiRQ!5e0!3m2!1sja!2sjp!4v1234567890"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-              </div>
-
-              {/* 右側: 詳細情報 */}
-              <div>
-                <div style={{ marginBottom: '2rem' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>📍</span>
-                    住所
-                  </h3>
-                  <p style={{ color: 'var(--color-gray-600)', lineHeight: '1.8', paddingLeft: '2rem' }}>
-                    〒286-0011<br />
-                    千葉県成田市土屋516-4 2F
-                  </p>
-                </div>
-
-                <div style={{ marginBottom: '2rem' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>🚗</span>
-                    お車でお越しの方
-                  </h3>
-                  <p style={{ color: 'var(--color-gray-600)', lineHeight: '1.8', paddingLeft: '2rem' }}>
-                    国道51号線沿い<br />
-                    大型駐車場完備（無料）
-                  </p>
-                </div>
-
-                <div style={{ marginBottom: '2rem' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>🚃</span>
-                    電車でお越しの方
-                  </h3>
-                  <p style={{ color: 'var(--color-gray-600)', lineHeight: '1.8', paddingLeft: '2rem' }}>
-                    京成本線「公津の杜駅」<br />
-                    徒歩約15分
-                  </p>
-                </div>
-
-                <div style={{ marginBottom: '2rem' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>📞</span>
-                    電話番号
-                  </h3>
-                  <p style={{ paddingLeft: '2rem' }}>
-                    <a
-                      href="tel:070-9035-3485"
-                      style={{
-                        color: 'var(--color-coral-pink)',
-                        fontWeight: '700',
-                        fontSize: '1.25rem',
-                        transition: 'color 0.3s'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-coral-pink-dark)'}
-                      onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-coral-pink)'}
-                    >
-                      070-9035-3485
-                    </a>
-                    <br />
-                    <span style={{ fontSize: '0.875rem', color: 'var(--color-gray-500)' }}>（タップで発信）</span>
-                  </p>
-                </div>
-
-                <div style={{ marginBottom: '2rem' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>💬</span>
-                    LINE
-                  </h3>
-                  <p style={{ color: 'var(--color-gray-600)', lineHeight: '1.8', paddingLeft: '2rem' }}>
-                    @jfl0054o
-                  </p>
-                </div>
-
-                <div style={{ marginBottom: '2rem' }}>
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--color-navy)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>⏰</span>
-                    営業時間
-                  </h3>
-                  <p style={{ color: 'var(--color-gray-600)', lineHeight: '1.8', paddingLeft: '2rem' }}>
-                    月〜土: 10:30〜21:00<br />
-                    日祝: 休館日
-                  </p>
-                </div>
-
-                <div style={{ paddingLeft: '2rem' }}>
-                  <a
-                    href="https://lin.ee/1TPJ2JH"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      backgroundColor: 'var(--color-lime-green)',
-                      color: 'white',
-                      padding: '1rem 2rem',
-                      borderRadius: 'var(--radius-full)',
-                      fontWeight: '700',
-                      fontSize: '1.0625rem',
-                      boxShadow: '0 4px 12px rgba(0, 200, 83, 0.3)',
-                      transition: 'all 0.3s ease',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.75rem',
-                      border: 'none',
-                      cursor: 'pointer'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'var(--color-lime-green-dark)';
-                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 200, 83, 0.4)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'var(--color-lime-green)';
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 200, 83, 0.3)';
-                    }}
-                  >
-                    <span style={{ fontSize: '1.5rem' }}>💬</span>
-                    体験レッスンを予約
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ===== CTAセクション ===== */}
-        <section
-          style={{
-            background: 'linear-gradient(135deg, var(--color-navy) 0%, var(--color-coral-pink) 100%)',
-            padding: 'var(--spacing-section) 0',
-            color: 'white',
-            textAlign: 'center'
-          }}
-        >
-          <div className="container" style={{ maxWidth: '800px', margin: '0 auto', padding: '0 1.5rem' }}>
-            <h2 style={{ fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: '900', marginBottom: '1.5rem', textShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
-              さあ、次はあなたの番。
-            </h2>
-            <p style={{ fontSize: 'clamp(1.125rem, 2.5vw, 1.5rem)', marginBottom: '2.5rem', opacity: '0.95', lineHeight: '1.8' }}>
-              新しい自分に出会う一歩を踏み出そう！
-            </p>
-            <a
-              href="https://lin.ee/1TPJ2JH"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                backgroundColor: 'white',
-                color: 'var(--color-coral-pink)',
-                padding: '1.25rem 3rem',
-                borderRadius: 'var(--radius-full)',
-                fontWeight: '900',
-                fontSize: 'clamp(1.125rem, 2.5vw, 1.375rem)',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-                transition: 'all 0.3s ease',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '1rem',
-                border: 'none',
-                cursor: 'pointer',
-                minHeight: '56px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px) scale(1.05)';
-                e.currentTarget.style.boxShadow = '0 15px 50px rgba(0,0,0,0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 10px 40px rgba(0,0,0,0.2)';
-              }}
-            >
-              <span style={{ fontSize: '2rem' }}>💬</span>
-              無料体験レッスンを予約する
-            </a>
-          </div>
-        </section>
-      </main >
-
-      {/* ===== フッター ===== */}
-      <footer style={{ backgroundColor: 'var(--color-navy)', color: 'white', padding: '3rem 0 1.5rem' }}>
-        <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1.5rem' }}>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '2rem',
-              marginBottom: '2.5rem'
-            }}
-          >
-            <div>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: '900', marginBottom: '1rem', color: 'var(--color-coral-pink)' }}>
-                FLAT-UP GYM
-              </h3>
-              <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)', lineHeight: '1.8' }}>
-                女性オーナーが創る、世界一優しい格闘技ジム。あなたのペースで、あなたらしく。
-              </p>
-            </div>
-
-            <div>
-              <h4 style={{ fontWeight: '700', marginBottom: '1rem', color: 'white' }}>アクセス</h4>
-              <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)', lineHeight: '1.8' }}>
-                〒286-0011<br />
-                千葉県成田市土屋516-4 2F<br />
-                無料駐車場完備
-              </p>
-            </div>
-
-            <div>
-              <h4 style={{ fontWeight: '700', marginBottom: '1rem', color: 'white' }}>営業時間</h4>
-              <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)', lineHeight: '1.8' }}>
-                月〜土曜日<br />
-                詳しくはお問い合わせください
-              </p>
-            </div>
-
-            <div>
-              <h4 style={{ fontWeight: '700', marginBottom: '1rem', color: 'white' }}>お問い合わせ</h4>
-              <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)', marginBottom: '1rem' }}>
-                <a href="tel:070-9035-3485" style={{ color: 'rgba(255,255,255,0.8)', transition: 'color 0.3s' }} onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-coral-pink-light)'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.8)'}>
-                  📞 070-9035-3485
-                </a>
-              </p>
-              <a
-                href="https://lin.ee/1TPJ2JH"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  backgroundColor: 'var(--color-lime-green)',
-                  color: 'white',
-                  padding: '0.625rem 1.25rem',
-                  borderRadius: 'var(--radius-full)',
-                  fontWeight: '700',
-                  fontSize: '0.875rem',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  transition: 'all 0.3s ease',
-                  minHeight: '44px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--color-lime-green-dark)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--color-lime-green)';
-                }}
-              >
-                💬 LINE友だち追加
-              </a>
-            </div>
-          </div>
-
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '2rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.6)', marginBottom: '1rem' }}>
-              <a href="/privacy" style={{ marginRight: '1.5rem', transition: 'color 0.3s' }} onMouseEnter={(e) => e.currentTarget.style.color = 'white'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}>プライバシーポリシー</a>
-              <a href="/terms" style={{ marginRight: '1.5rem', transition: 'color 0.3s' }} onMouseEnter={(e) => e.currentTarget.style.color = 'white'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}>利用規約</a>
-              <a href="/law" style={{ transition: 'color 0.3s' }} onMouseEnter={(e) => e.currentTarget.style.color = 'white'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.6)'}>特定商取引法</a>
-            </div>
-            <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.6)' }}>
-              © 2024 FLAT-UP GYM. All Rights Reserved.
-            </p>
-          </div>
-        </div>
-      </footer >
-
-      {/* ===== 固定フッターCTA（モバイルのみ） ===== */}
-      < div
-        className="mobile-sticky-footer"
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          width: '100%',
-          backgroundColor: 'white',
-          borderTop: '1px solid var(--color-gray-200)',
-          padding: '1rem 1.5rem',
-          boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
-          zIndex: 999,
-          display: 'none'
-        }}
-      >
-        <a
-          href="https://lin.ee/1TPJ2JH"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            backgroundColor: 'var(--color-lime-green)',
-            color: 'white',
-            padding: '1rem',
-            borderRadius: 'var(--radius-full)',
-            fontWeight: '900',
-            fontSize: '1.0625rem',
-            boxShadow: '0 4px 20px rgba(0, 200, 83, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.75rem',
-            width: '100%',
-            border: 'none',
-            cursor: 'pointer',
-            minHeight: '56px'
-          }}
-        >
-          <span style={{ fontSize: '1.5rem' }}>💬</span>
-          LINEで無料体験予約
-        </a>
-      </div >
-
-      {/* ===== レスポンシブスタイル ===== */}
-      < style jsx > {`
-        @media (min-width: 769px) {
-          .desktop-nav {
-            display: flex !important;
-          }
-          .desktop-phone {
-            display: flex !important;
-          }
-          .desktop-text {
-            display: inline !important;
-          }
-          .desktop-order-1 {
-            order: 1 !important;
-          }
-          .desktop-order-2 {
-            order: 2 !important;
-          }
+import { useEffect, useState, useRef } from 'react';
+import liff from '@line/liff';
+
+// Configuration
+// In production, this should be an environment variable
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+
+export default function AIKA19Page() {
+    const [status, setStatus] = useState<'initializing' | 'ready' | 'uploading' | 'processing' | 'complete' | 'error'>('initializing');
+    const [profile, setProfile] = useState<any>(null);
+    const [errorMsg, setErrorMsg] = useState('');
+    const [progress, setProgress] = useState(0);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        const initLiff = async () => {
+            try {
+                const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+                if (!liffId) {
+                    console.warn('LIFF ID not found in env, using mock if local');
+                    // For local dev without LIFF ID, we might skip or fail.
+                    // Assuming user has set it up as per requirements.
+                }
+
+                await liff.init({ liffId: liffId || 'YOUR_LIFF_ID' });
+
+                if (liff.isLoggedIn()) {
+                    const p = await liff.getProfile();
+                    setProfile(p);
+                    setStatus('ready');
+                } else {
+                    // Forcing login for LIFF app usage
+                    if (process.env.NODE_ENV === 'development') {
+                        console.warn('Dev Mode: Skipping LINE Login');
+                        setProfile({ userId: 'DEV_USER_ID', displayName: 'Dev User' });
+                        setStatus('ready');
+                    } else {
+                        liff.login();
+                    }
+                }
+            } catch (e: any) {
+                console.error('LIFF Init Error', e);
+                // Fallback for local testing if not in LIFF browser
+                if (process.env.NODE_ENV === 'development') {
+                    setProfile({ userId: 'dev_user', displayName: 'Developer' });
+                    setStatus('ready');
+                } else {
+                    setStatus('error');
+                    setErrorMsg('LIFF初期化に失敗しました: ' + e.message);
+                }
+            }
+        };
+        initLiff();
+    }, []);
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        console.log('Selected file:', file.name, file.type, file.size);
+        console.log('API Base URL:', API_BASE_URL);
+
+        if (file.size > 50 * 1024 * 1024) { // 50MB limit
+            alert('動画サイズが大きすぎます（50MB以下にしてください）');
+            return;
         }
-        
-        @media (max-width: 768px) {
-          .mobile-sticky-footer {
-            display: block !important;
-          }
-          .desktop-text {
-            display: none;
-          }
-          body {
-            padding-bottom: 88px;
-          }
+
+        setStatus('uploading');
+        setProgress(10);
+        setErrorMsg('');
+
+        try {
+            // 1. Get Presigned URL
+            console.log('Requesting upload URL...');
+            const reqRes = await fetch(`${API_BASE_URL}/api/upload-request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileName: file.name, contentType: file.type })
+            });
+
+            console.log('Upload Request Status:', reqRes.status);
+
+            if (!reqRes.ok) {
+                const errText = await reqRes.text();
+                console.error('Upload Request Error Body:', errText);
+                if (reqRes.status === 429) throw new Error('本日の利用枠が上限に達しました。');
+                throw new Error(`サーバー通信エラー: ${reqRes.status} ${reqRes.statusText}`);
+            }
+
+            const { uploadUrl, fileKey } = await reqRes.json();
+            console.log('Got upload URL for key:', fileKey);
+            setProgress(30);
+
+            // 2. Upload to R2
+            console.log('Uploading to R2...');
+            const uploadRes = await fetch(uploadUrl, {
+                method: 'PUT',
+                body: file,
+                headers: { 'Content-Type': file.type }
+            });
+
+            console.log('R2 Upload Status:', uploadRes.status);
+
+            if (!uploadRes.ok) {
+                const errText = await uploadRes.text().catch(() => 'No body');
+                console.error('R2 Error Body:', errText);
+                throw new Error(`動画アップロードに失敗しました (R2 Status: ${uploadRes.status})`);
+            }
+            setProgress(70);
+
+            setStatus('processing');
+
+            // 3. Trigger Analysis
+            console.log('Triggering analysis...');
+            const analyzeRes = await fetch(`${API_BASE_URL}/api/analyze`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    fileKey,
+                    userId: profile?.userId || 'GUEST_USER' // Fallback for debugging
+                })
+            });
+
+            console.log('Analyze Request Status:', analyzeRes.status);
+
+            if (!analyzeRes.ok) {
+                const errText = await analyzeRes.text();
+                console.error('Analyze Error Body:', errText);
+                if (analyzeRes.status === 429) throw new Error('本日の利用枠が上限に達しました。');
+                throw new Error(`解析開始エラー: ${analyzeRes.status}`);
+            }
+
+            setProgress(100);
+            setStatus('complete');
+
+        } catch (err: any) {
+            console.error('Full Error Object:', err);
+            setStatus('error');
+            setErrorMsg(err.message || '予期せぬエラーが発生しました');
         }
-      `}</style >
-    </div >
-  );
+    };
+
+    const triggerFileInput = () => {
+        fileInputRef.current?.click();
+    };
+
+    return (
+        <div className="min-h-screen relative overflow-hidden bg-[#0f172a] text-white font-sans">
+            {process.env.NODE_ENV === 'development' && (
+                <div className="absolute top-0 left-0 w-full bg-red-600 text-white text-xs font-bold text-center py-1 z-50">
+                    🚀 DEV MODE: NEW ARCHITECTURE (Cloudflare R2 + Gemini)
+                </div>
+            )}
+            {/* Background Effects */}
+            <div className="absolute top-[-20%] left-[-20%] w-[50%] h-[50%] rounded-full bg-purple-600 blur-[120px] opacity-30 animate-pulse"></div>
+            <div className="absolute bottom-[-20%] right-[-20%] w-[50%] h-[50%] rounded-full bg-blue-600 blur-[120px] opacity-30 animate-pulse delay-1000"></div>
+
+            <main className="relative z-10 flex flex-col items-center justify-center min-h-screen p-6">
+
+                <div className="w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center">
+
+                    <h1 className="text-3xl font-black mb-2 bg-gradient-to-r from-pink-500 to-purple-400 bg-clip-text text-transparent">
+                        AIKA 19
+                    </h1>
+                    <p className="text-gray-300 mb-8 text-sm">
+                        次世代AI格闘技フォーム解析
+                    </p>
+
+                    {status === 'initializing' && (
+                        <div className="animate-pulse text-gray-400">Loading LIFF...</div>
+                    )}
+
+                    {status === 'ready' && (
+                        <>
+                            <div className="mb-8 relative group">
+                                <div className="absolute -inset-1 bg-gradient-to-r from-pink-600 to-purple-600 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+                                <button
+                                    onClick={triggerFileInput}
+                                    className="relative px-8 py-4 bg-black rounded-full leading-none flex items-center divide-x divide-gray-600"
+                                >
+                                    <span className="flex items-center space-x-3">
+                                        <svg className="w-6 h-6 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                        <span className="text-gray-100 font-bold">動画を選択して解析</span>
+                                    </span>
+                                </button>
+                            </div>
+                            <p className="text-xs text-gray-400 max-w-xs">
+                                ※ 動画は1分以内のものをアップロードしてください。<br />
+                                ※ 解析結果はLINEトークに送信されます。
+                            </p>
+                        </>
+                    )}
+
+                    {status === 'uploading' && (
+                        <div className="w-full">
+                            <p className="mb-2 text-pink-400 font-bold animate-pulse">Uploading...</p>
+                            <div className="w-full bg-gray-700 rounded-full h-2.5">
+                                <div className="bg-gradient-to-r from-pink-500 to-purple-500 h-2.5 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
+                            </div>
+                        </div>
+                    )}
+
+                    {status === 'processing' && (
+                        <div className="flex flex-col items-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mb-4"></div>
+                            <p className="text-lg font-bold">解析リクエスト送信中...</p>
+                        </div>
+                    )}
+
+                    {status === 'complete' && (
+                        <div className="bg-green-500/20 border border-green-500/50 rounded-xl p-4 w-full">
+                            <svg className="w-12 h-12 text-green-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <h3 className="text-xl font-bold text-green-300 mb-1">受付完了！</h3>
+                            <p className="text-sm text-gray-200">
+                                AIが動画を解析中です。<br />
+                                完了次第、LINE通知をお送りしますので<br />
+                                この画面を閉じてお待ちください。
+                            </p>
+                            <button
+                                onClick={() => liff.closeWindow()}
+                                className="mt-4 text-xs underline text-gray-400 hover:text-white"
+                            >
+                                [閉じる]
+                            </button>
+                        </div>
+                    )}
+
+                    {status === 'error' && (
+                        <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-4 w-full">
+                            <h3 className="text-lg font-bold text-red-400 mb-1">エラーが発生しました</h3>
+                            <p className="text-sm text-gray-200 mb-4">{errorMsg}</p>
+                            <button
+                                onClick={() => setStatus('ready')}
+                                className="px-4 py-2 bg-red-600 rounded-lg text-sm font-bold hover:bg-red-500 transition"
+                            >
+                                もう一度試す
+                            </button>
+                        </div>
+                    )}
+
+                    <input
+                        type="file"
+                        accept="video/*"
+                        className="hidden"
+                        ref={fileInputRef}
+                        onChange={handleFileSelect}
+                    />
+
+                </div>
+
+                <div className="mt-8 text-xs text-gray-500 font-mono">
+                    Powered by Gemini Pro 1.5 & Cloudflare R2
+                </div>
+
+            </main>
+        </div>
+    );
 }

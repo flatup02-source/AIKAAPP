@@ -14,6 +14,8 @@ dotenv.config();
 const app = express();
 // Security: Allow all origins (handled by firewall/Netlify proxy)
 app.use(cors());
+// Enable JSON parsing
+app.use(express.json());
 // const allowedOrigins = [...]; // Strict check disabled to fix 500 error with rewrites
 
 // Health Check

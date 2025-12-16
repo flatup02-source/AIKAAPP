@@ -81,9 +81,17 @@ export default function AIKA19Page() {
 
             if (!reqRes.ok) {
                 const errText = await reqRes.text();
+                let errMsg = `サーバー通信エラー: ${reqRes.status}`;
+                try {
+                    const errJson = JSON.parse(errText);
+                    if (errJson.error) errMsg += ` (${errJson.error})`;
+                } catch (e) {
+                    errMsg += ` ${reqRes.statusText}`;
+                }
+
                 console.error('Upload Request Error Body:', errText);
                 if (reqRes.status === 429) throw new Error('本日の利用枠が上限に達しました。');
-                throw new Error(`サーバー通信エラー: ${reqRes.status} ${reqRes.statusText}`);
+                throw new Error(errMsg);
             }
 
             const { uploadUrl, fileKey } = await reqRes.json();

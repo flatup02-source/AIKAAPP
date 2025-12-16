@@ -42,7 +42,20 @@ app.post('/api/upload-request', async (req, res) => {
     res.json({ uploadUrl, fileKey: uniqueKey });
   } catch (error) {
     console.error('Upload Request Error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    // DEBUG: Expose error to client
+    const r2ConfigCheck = {
+      accountId: !!process.env.R2_ACCOUNT_ID,
+      keyId: !!process.env.R2_ACCESS_KEY_ID,
+      secret: !!process.env.R2_SECRET_ACCESS_KEY,
+      bucket: !!process.env.R2_BUCKET_NAME,
+    };
+    console.log('R2 Config Check:', r2ConfigCheck);
+
+    res.status(500).json({
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      configCheck: r2ConfigCheck
+    });
   }
 });
 

@@ -4,13 +4,18 @@ export async function getGoogleAuthFromEnv(scopes: string[] = ['https://www.goog
   const raw = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
   if (!raw) throw new Error('Missing environment variable GOOGLE_APPLICATION_CREDENTIALS_JSON');
 
-  const decoded = Buffer.from(raw, 'base64').toString('utf-8');
-
   let json: Record<string, unknown>;
   try {
+    // Try to decode as Base64 first
+    const decoded = Buffer.from(raw, 'base64').toString('utf-8');
     json = JSON.parse(decoded);
-  } catch {
-    throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON could not be parsed after Base64 decoding. Is it valid JSON?');
+  } catch (decodeError) {
+    // If Base64 decode fails, try parsing as plain JSON
+    try {
+      json = JSON.parse(raw);
+    } catch (parseError) {
+      throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON could not be parsed as Base64 or plain JSON.');
+    }
   }
   return new GoogleAuth({ credentials: json as any, scopes });
 }

@@ -1,10 +1,10 @@
 // filename: server.js
-
 import express from 'express';
 
 // セキュリティ: 許可するオリジンを限定
 const allowedOrigins = [
   'https://serene-zabaione-8c4e2a.netlify.app',
+  'https://aika18.netlify.app',
 ];
 
 // 可変なプレビューURLに対応したい場合のカスタム判定
@@ -18,14 +18,13 @@ function isAllowedOrigin(origin) {
 
 const app = express();
 
-// 認証付きリクエストも許可するため、credentials:true を使う場合は
-// Access-Control-Allow-Origin にワイルドカード(*)は使えない。Originごとに返す必要がある
+// CORS設定
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (isAllowedOrigin(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
-    res.header('Vary', 'Origin'); // CDN経由のキャッシュ汚染防止
-    res.header('Access-Control-Allow-Credentials', 'true'); // Cookie/Authorizationヘッダ利用時
+    res.header('Vary', 'Origin');
+    res.header('Access-Control-Allow-Credentials', 'true');
   }
   res.header(
     'Access-Control-Allow-Headers',
@@ -40,7 +39,6 @@ app.use((req, res, next) => {
 
 // Preflight (OPTIONS) 明示対応
 app.options('*', (req, res) => {
-  // 上でヘッダを付けているので、そのまま200で返す
   res.status(200).send('OK');
 });
 
@@ -51,14 +49,13 @@ app.get('/', (req, res) => {
   res.status(200).send('OK');
 });
 
-// 例: API ルート
+// API ルート
 app.get('/health', (req, res) => {
   res.json({ ok: true, ts: Date.now() });
 });
 
 app.post('/api/upload', (req, res) => {
   // 実際の処理をここで行う（例: GCS に書き込みなど）
-  // 成功レスポンス
   res.json({ status: 'uploaded' });
 });
 

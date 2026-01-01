@@ -11,9 +11,14 @@ export async function POST(req: NextRequest) {
     // フォールバック: ランタイムに大きな環境変数 (GOOGLE_APPLICATION_CREDENTIALS_JSON) が無い場合は
     // スプレッドシート書き込みをスキップして受領のみ返す。
     const hasGoogleCreds = !!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
-    const auth = hasGoogleCreds
-      ? await getGoogleAuthFromEnv(['https://www.googleapis.com/auth/spreadsheets'])
-      : null;
+    let auth = null;
+    if (hasGoogleCreds) {
+      try {
+        auth = await getGoogleAuthFromEnv(['https://www.googleapis.com/auth/spreadsheets']);
+      } catch (authError) {
+        console.error('Google Auth Initialization Error:', authError);
+      }
+    }
     const sheets = auth ? google.sheets({ version: 'v4', auth }) : null;
     const spreadsheetId = process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID;
     const body = await req.json();

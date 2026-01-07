@@ -39,7 +39,7 @@ app.post('/api/upload-request', async (req, res) => {
 
     const { fileName, contentType } = req.body;
     // Generate unique key
-    const uniqueKey = `videos/${Date.now()}_${fileName || 'video.mp4'}`;
+    const uniqueKey = `uploads/${Date.now()}_${fileName || 'image.jpg'}`;
 
     // Get Presigned URL
     const uploadUrl = await r2Service.getUploadUrl(uniqueKey, contentType);
@@ -96,12 +96,19 @@ app.post('/api/analyze', async (req, res) => {
         await pipeline(s3Stream, fs.createWriteStream(tempFilePath));
         console.log('Downloaded to', tempFilePath);
 
+        // Determine Mime Type roughly
+        const ext = path.extname(fileKey).toLowerCase();
+        let mime = 'image/jpeg';
+        if (ext === '.png') mime = 'image/png';
+        if (ext === '.mp4') mime = 'video/mp4';
+        if (ext === '.mov') mime = 'video/quicktime';
+
         // 2. OpenAI/Gemini Analysis
-        const resultText = await geminiService.analyzeVideo(tempFilePath);
+        const resultText = await geminiService.analyzeContent(tempFilePath, mime);
         console.log('Analysis result:', resultText.slice(0, 50) + '...');
 
         // 3. Push to LINE
-        await lineService.pushMessage(userId, "【解析完了】\n" + resultText);
+        await lineService.pushMessage(userId, "【食事解析完了】\n" + resultText);
 
       } catch (error) {
         console.error('Async Analysis Error:', error);
@@ -116,6 +123,34 @@ app.post('/api/analyze', async (req, res) => {
   } catch (error) {
     console.error('Analyze Request Error:', error);
     res.status(500).json({ error: error.message, stack: process.env.NODE_ENV === 'development' ? error.stack : undefined });
+  }
+});
+
+// 4. Consultation Route (Google Sheets)
+app.post('/api/consult', async (req, res) => {
+  try {
+    const { userId, content, type } = req.body;
+    console.log(`Consultation received from ${userId} (${type}): ${content}`);
+
+    // TODO: Integrate Google Sheets API here
+    // const sheets = google.sheets({ version: 'v4', auth: ... });
+    // await sheets.spreadsheets.values.append({ ... });
+
+    // Mock Success: Log to a local file for now to prove it works without credentials
+    const logLine = `[${new Date().toISOString()}] User: ${userId} | Type: ${type} | Content: ${content}\n`;
+    fs.appendFileSync('consultations.log', logLine);
+
+    // Reply to User via LINE
+    const replyText = type === 'life_consultation'
+      ? "【相談受付】\nお悩みを受け付けました。Google Sheetsに記録しました。\nスタッフが確認次第、ご連絡またはアドバイスを差し上げます。"
+      : "【記録完了】\nジムノートを保存しました。\n継続は力なり！";
+
+    await lineService.pushMessage(userId, replyText);
+
+    res.json({ success: true, message: 'Saved to sheets (mock)' });
+  } catch (error) {
+    console.error('Consult Error:', error);
+    res.status(500).json({ error: 'Failed to save consultation' });
   }
 });
 

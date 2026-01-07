@@ -7,62 +7,64 @@ body, html {
 @tailwind utilities;
 
 :root {
-  --primary-color: #00BFA5;
-  --background-color: #F5F5F5;
-  --text-color: #212121;
-  --success-color: #4CAF50;
-  --error-color: #F44336;
-  --white: #FFFFFF;
+  --background-rgb: 5, 5, 5;
+  --foreground-rgb: 255, 255, 255;
+  --primary-gold: #FFD700;
 }
 
 body {
-  color: var(--text-color);
-  background: var(--background-color);
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  font-family: var(--font-noto-sans-jp), sans-serif;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-
-
-@layer components {
-  .scanline {
-    animation: scanline 3s linear infinite;
-  }
-
-  .pulse-gold {
-    animation: pulse-gold 2s infinite;
-  }
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-orbitron), sans-serif;
+  letter-spacing: 0.05em;
 }
 
-@keyframes scanline {
-  0% {
-    transform: translateY(-10%);
-    opacity: 0;
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
-  10% {
-    opacity: 1;
+  
+  .glass-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-}
 
-@keyframes pulse-gold {
-  0%, 100% {
-    box-shadow: 0 0 15px 5px rgba(255, 215, 0, 0.4);
+  .text-glow {
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3);
   }
-  50% {
-    box-shadow: 0 0 25px 10px rgba(255, 215, 0, 0.7);
+  
+  .border-glow {
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3), inset 0 0 10px rgba(255, 215, 0, 0.1);
   }
 }
 
-/* モバイル表示用のスタイル */
- @media (max-width: 768px) {
-  .mobile-full-width {
-    width: 100%; /* 画面の横幅いっぱいに広げる */
-    height: auto;  /* 高さは自動で調整して画像の比率を保つ */
-    display: block; /* 余分な隙間をなくす */
-  }
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #FFD700;
 }

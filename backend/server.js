@@ -110,6 +110,22 @@ app.post('/api/analyze', async (req, res) => {
         // 3. Push to LINE
         await lineService.pushMessage(userId, "【食事解析完了】\n" + resultText);
 
+        // --- Makeへの自動記録 (Backend) ---
+        try {
+          await fetch('https://hook.us2.make.com/xxagz7z47s2d9m3j99lmpfk3cjbxdup4', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: 'LINEユーザー',
+              message: resultText,
+              time: new Date().toLocaleString()
+            })
+          });
+        } catch (e) {
+          console.error('Make Webhook Error:', e);
+        }
+        // ---------------------------------
+
       } catch (error) {
         console.error('Async Analysis Error:', error);
         await lineService.pushMessage(userId, "【エラー】\n動画の解析中にエラーが発生しました。もう一度お試しください。");
@@ -146,6 +162,22 @@ app.post('/api/consult', async (req, res) => {
       : "【記録完了】\nジムノートを保存しました。\n継続は力なり！";
 
     await lineService.pushMessage(userId, replyText);
+
+    // --- Makeへの自動記録 (Backend) ---
+    try {
+      await fetch('https://hook.us2.make.com/xxagz7z47s2d9m3j99lmpfk3cjbxdup4', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'LINEユーザー',
+          message: replyText,
+          time: new Date().toLocaleString()
+        })
+      });
+    } catch (e) {
+      console.error('Make Webhook Error:', e);
+    }
+    // ---------------------------------
 
     res.json({ success: true, message: 'Saved to sheets (mock)' });
   } catch (error) {

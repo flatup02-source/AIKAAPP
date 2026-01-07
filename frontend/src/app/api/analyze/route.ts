@@ -45,6 +45,26 @@ export async function POST(req: NextRequest) {
         // Analyze
         const resultText = await geminiService.analyzeContent(tempFilePath, mime);
 
+        // Send to Make.com (Manus) if configured
+        const makeWebhookUrl = process.env.MAKE_WEBHOOK_URL;
+        if (makeWebhookUrl) {
+            try {
+                await fetch(makeWebhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId,
+                        fileKey,
+                        analysisResult: resultText,
+                        type: 'meal_analysis',
+                        timestamp: new Date().toISOString()
+                    })
+                });
+            } catch (e) {
+                console.error('Failed to send to Make:', e);
+            }
+        }
+
         // Send LINE
         await lineService.pushMessage(userId, "【食事解析完了】\n" + resultText);
 
